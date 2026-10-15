@@ -5,8 +5,8 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-GAME_URL = "https://sergeyduvakin.github.io/the-morning-rush/"
-EXPECTED_USERNAME = "morningrush_bot"
+GAME_URL = "https://sergeyduvakin.github.io/the-morning-rush/?v=3"
+EXPECTED_USERNAME = "TheMorningRush_bot"
 ROOT = Path(__file__).resolve().parent
 
 
@@ -71,7 +71,7 @@ def setup():
     api("setChatMenuButton", {
         "menu_button": {
             "type": "web_app",
-            "text": "Играть",
+            "text": "Start",
             "web_app": {"url": GAME_URL},
         }
     })

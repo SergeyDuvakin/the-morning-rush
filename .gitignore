@@ -1,5 +1,6 @@
 .env
 bot/.env
+__pycache__/
 davka/
 chas-pik/
 для-агента-новая-игра-в-telegram.md
