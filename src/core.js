@@ -16,7 +16,6 @@ function tgInit(){ if(!tg) return;
   try{ if(tgv('6.1')) tg.BackButton.onClick(()=>window.onBack&&window.onBack()); }catch(e){}
 }
 function tgBack(show){ if(!inTG) return; try{ if(tgv('6.1')) show?tg.BackButton.show():tg.BackButton.hide(); }catch(e){} }
-// null — датчика нет; true — телефон уже лежит боком
 function sensorLandscape(){
   const o=window.orientation;
   if(o===90||o===-90) return true;
@@ -25,8 +24,6 @@ function sensorLandscape(){
   return null;
 }
 function layoutLandscape(){ return window.innerWidth>window.innerHeight*1.05; }
-// высота: максимум из innerHeight и обеих высот Telegram (нули игнорируем).
-// После поворота в альбом старая портретная высота ещё больше ширины — её не берём.
 function viewH(){ const c=[window.innerHeight]; if(tg){ c.push(tg.viewportHeight, tg.viewportStableHeight); }
   const good=c.filter(v=>v&&isFinite(v)&&v>0); if(!good.length) return window.innerHeight||0;
   if(layoutLandscape()){ const fit=good.filter(v=>v<window.innerWidth); if(fit.length) return Math.max(...fit); }
@@ -71,11 +68,16 @@ for(const ms of [50,300,800]) setTimeout(rescale,ms);
 
 // ---------- текст: отдельный слой в реальном разрешении экрана (чётко) ----------
 const FONT='"Trebuchet MS","Segoe UI",system-ui,sans-serif';
+// кэш отрисованных надписей: обводка strokeText дорогая, а надписи почти не меняются от кадра к кадру
+const TXTC=new Map();
 function txt(s,x,y,size=8,col='#fff',align='left',outline='#1b1426',weight=900,deco=false){ // x,y,size во внутренних px
-  const k=SC; if(!deco) size=Math.max(size,MINPX()); tctx.font=weight+' '+Math.round(size*k)+'px '+FONT; tctx.textAlign=align; tctx.textBaseline='middle';
-  const px=Math.round(x*k), py=Math.round(y*k);
-  if(outline){ tctx.lineJoin='round'; tctx.lineWidth=Math.max(2,Math.round(size*k*.22)); tctx.strokeStyle=outline; tctx.strokeText(s,px,py); }
-  tctx.fillStyle=col; tctx.fillText(s,px,py); }
+  const k=SC; if(!deco) size=Math.max(size,MINPX()); s=String(s); const fpx=Math.round(size*k); const key=s+'|'+fpx+'|'+col+'|'+outline+'|'+weight;
+  let c=TXTC.get(key);
+  if(!c){ if(TXTC.size>600) TXTC.clear(); const font=weight+' '+fpx+'px '+FONT; tctx.font=font; const lw=outline?Math.max(2,Math.round(size*k*.22)):0; const w=Math.ceil(tctx.measureText(s).width)+lw*2+4, h=Math.ceil(fpx*1.5)+lw*2;
+    const cv=document.createElement('canvas'); cv.width=Math.max(1,w); cv.height=Math.max(1,h); const x2=cv.getContext('2d'); x2.font=font; x2.textAlign='left'; x2.textBaseline='middle';
+    if(outline){ x2.lineJoin='round'; x2.lineWidth=lw; x2.strokeStyle=outline; x2.strokeText(s,lw+2,h/2); } x2.fillStyle=col; x2.fillText(s,lw+2,h/2); c={cv,w,h,pad:lw+2}; TXTC.set(key,c); }
+  const px=Math.round(x*k), py=Math.round(y*k); const ox=align==='center'?Math.round((c.w-c.pad*2)/2)+c.pad:align==='right'?c.w-c.pad+2:c.pad;
+  tctx.drawImage(c.cv,px-ox,Math.round(py-c.h/2)); }
 const MINPX=()=>11*DPR/SC; // минимум 11 CSS px — никакой мелочи
 function txtW(s,size=8,weight=900){ size=Math.max(size,MINPX()); tctx.font=weight+' '+Math.round(size*SC)+'px '+FONT; return tctx.measureText(s).width/SC; }
 function clearText(){ tctx.setTransform(1,0,0,1,0,0); tctx.clearRect(0,0,tcv.width,tcv.height); }

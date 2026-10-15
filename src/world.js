@@ -115,7 +115,16 @@ const AD=[{t:'КРЕДИТ НА ПЕЛЬМЕНИ',s:'0% начинки',c:'#d83a
 // ===== ГЛУБИНА 2.5D =====
 const dS=d=>0.82+0.36*d; // масштаб по глубине: дальний край 0.82, ближний 1.18
 function depthK(y){ return clamp((y-FY0)/Math.max(1,FY1-FY0),0,1); }
-function persFloor(cam,col,step){ // швы плит сходятся к точке схода, ряды плотнее вдали
+const PFC=new Map();
+function persFloor(cam,col,step){ // кэш: узор зависит только от сдвига cam по модулю шага плитки
+  const sh=((Math.round(cam)%step)+step)%step, key=W+'|'+H+'|'+FY0+'|'+col+'|'+step+'|'+sh; let c=PFC.get(key);
+  if(!c){ if(PFC.size>200) PFC.clear(); const [cv,x]=mkc(W,H-FY0); const o=ctx; persFloorRaw.call(null,sh,col,step,x); c=cv; PFC.set(key,c); }
+  ctx.drawImage(c,0,FY0); }
+function persFloorRaw(cam,col,step,ctx){ const FY=FY0; const h=H-FY; ctx.fillStyle=col; const FY0_=0;
+  for(let i=1;i<9;i++){ const d=Math.pow(i/9,1.6); ctx.fillRect(0,Math.round(FY0_+d*h),W,1); }
+  const k0=Math.floor((cam-W)/step)-2, k1=Math.ceil((cam+W*1.4)/step)+2;
+  for(let k=k0;k<=k1;k++){ const X=k*step; for(let r=0;r<h;r++){ const d=r/h, s=dS(d); const sx=Math.round((X-cam-W/2)*s+W/2); if(sx>=0&&sx<W) ctx.fillRect(sx,FY0_+r,1,1); } } }
+function persFloorOld(cam,col,step){
   const h=H-FY0; ctx.fillStyle=col;
   for(let i=1;i<9;i++){ const d=Math.pow(i/9,1.6); ctx.fillRect(0,Math.round(FY0+d*h),W,1); }
   const k0=Math.floor((cam-W)/step)-2, k1=Math.ceil((cam+W*1.4)/step)+2;

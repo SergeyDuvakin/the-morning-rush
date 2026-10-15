@@ -12,7 +12,7 @@ function questsToday(){ const d=today(); if(save.qd!==d){ save.qd=d; let s=[...d
 function quest(id,n=1){ for(const q of questsToday()){ const Q=QUESTS[q.i]; if(Q[0]===id&&!q.done){ q.n+=n; if(q.n>=Q[1]){ q.done=true; save.coins+=40; say('КВЕСТ: '+Q[2]+' ✓ +40',2.2,P.neonLime); SFX.win(); } } } }
 // ---------- старт уровня ----------
 function startLevel(idx){ curIdx=idx; const L=LEVELS[idx]; floorBand(); const lv=buildLevel(L); curLv=lv; G.lv=lv;
-  Object.assign(G,{ens:[],items:[],fx:[],parts:[],pops:[],cam:0,camLock:null,score:0,coins:0,combo:0,comboT:0,bestCombo:0,rage:0,msg:null,hurtTaken:0,time:0,stats:{},arena:-1,wave:-1,done:false,win:false,lost:false,tilt:0,coffeeT:0,cakeLost:false,moves:new Set(),tut:lv.tutorial?0:-1,doneT:0});
+  Object.assign(G,{ens:[],items:[],fx:[],parts:[],pops:[],cam:0,camLock:null,score:0,coins:0,combo:0,comboT:0,bestCombo:0,rage:0,msg:null,hurtTaken:0,time:0,stats:{},arena:-1,wave:-1,done:false,cutDone:false,win:false,lost:false,tilt:0,coffeeT:0,cakeLost:false,moves:new Set(),tut:lv.tutorial?0:-1,doneT:0});
   G.hero=makeHero(heroId,40,(FY0+FY1)/2); G.items=lv.items.map(i=>Object.assign({z:0},i)); G.ens=[...lv.props];
   if(NIGHT3()) G.items.push({k:'pie',x:120,y:FY1-6});
   bgReset(lv); musTheme=L.w; musOn=true; G.scene='play'; paused=false; tgBack(true);
@@ -144,8 +144,9 @@ function drawPause(){ G.labels.length=0; ctx.fillStyle='#120c18d0'; ctx.fillRect
   const bh=Math.max(26,48*DPR/SC), bw=150; let y=H*.32; bigBtn('ПРОДОЛЖИТЬ',W/2-bw/2,y,bw,bh,'#2aa860',()=>paused=false,'resume'); y+=bh+8;
   bigBtn('ЗАНОВО',W/2-bw/2,y,bw,bh,'#3a6ad8',()=>{paused=false; startLevel(curIdx);},'restart'); y+=bh+8;
   bigBtn('НА КАРТУ',W/2-bw/2,y,bw,bh,'#8a3ad8',()=>{paused=false; toMap();},'map');
-  bigBtn(save.mute?'🔇':'🔊',SA.l+8,H-SA.b-bh-8,bh,bh,'#4a3a5a',()=>{save.mute=!save.mute; if(master) master.gain.value=save.mute?0:.45; store();},'mute',12);
-  bigBtn(save.noHaptic?'📴':'📳',SA.l+bh+16,H-SA.b-bh-8,bh,bh,'#4a3a5a',()=>{save.noHaptic=!save.noHaptic; store();},'hapt',12); }
+  { const tw=Math.max(110,W*.3), th=Math.max(22,40*DPR/SC), ty=H-SA.b-th-8;
+    bigBtn(save.mute?'ЗВУК: ВЫКЛ':'ЗВУК: ВКЛ',SA.l+8,ty,tw,th,save.mute?'#5a4a5a':'#3a7a5a',()=>{save.mute=!save.mute; if(master) master.gain.value=save.mute?0:.45; store();},'mute',8);
+    bigBtn(save.noHaptic?'ВИБРО: ВЫКЛ':'ВИБРО: ВКЛ',SA.l+16+tw,ty,tw,th,save.noHaptic?'#5a4a5a':'#3a7a5a',()=>{save.noHaptic=!save.noHaptic; store(); haptic('select');},'hapt',8); } }
 // ---------- титул ----------
 const TITLE={crowd:[]};
 function toTitle(){ G.scene='title'; tgBack(false); musTheme=3; musOn=true; floorBand(); TITLE.crowd=[]; const specs=[HERO_SPECS.serega,...['polite','aunt','musician','kid','bag','courier','seeds'].map(t=>EN[t].spec())]; for(let i=0;i<10;i++) TITLE.crowd.push({spec:specs[i%specs.length],x:i/10,ph:rnd(0,9),sp:rnd(.6,1.2)}); BG.lv={name:'Давка',line:0,bg:'station',len:9999}; bgReset(BG.lv); }
@@ -160,7 +161,7 @@ function drawTitle(){ G.labels=[]; buttons=[]; BG.t+=0; drawBG(G.t*20); vignette
   if(G.catRun&&G.t-G.catRun<4){ const cx=(G.t-G.catRun)/4*(W+40)-20; drawProp({kind:'cat',x:cx+G.cam,y:FY0+20,z:0,face:1,col:'#4a4a4a'}); }
   const bh=Math.max(28,52*DPR/SC);
   bigBtn('▶ ИГРАТЬ',W/2-80,H*.52,160,bh,'#d8265e',()=>{ if(!save.cut.intro){ startCut('intro',()=>{ save.cut.intro=1; store(); startCut('metro',()=>toMap()); }); } else toMap(); },'play',12);
-  bigBtn('🚪 ПРОБИТЬСЯ К ВЫХОДУ',W/2-80,H*.52+bh+8,160,bh,'#3d6ff0',()=>startExit(),'exit',9);
+  bigBtn('ПРОБИТЬСЯ · 20 с',W/2-80,H*.52+bh+8,160,bh,'#3d6ff0',()=>startExit(),'exit',9); if(save.escBest) G.labels.push(['рекорд '+save.escBest.toFixed(1)+' с',W/2,H*.52+bh*2+18,7,'#fff']);
   if(G.msg){ G.msg.t-=1/60; if(G.msg.t<=0) G.msg=null; else G.labels.push([G.msg.s,W/2,H-SA.b-16,9,G.msg.col]); }
 }
 // ---------- карта ----------
