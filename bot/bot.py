@@ -5,7 +5,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-GAME_URL = "https://sergeyduvakin.github.io/the-morning-rush/?v=5"
+GAME_URL = "https://sergeyduvakin.github.io/the-morning-rush/?v=6"
 EXPECTED_USERNAME = "TheMorningRush_bot"
 ROOT = Path(__file__).resolve().parent
 

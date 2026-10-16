@@ -1,4 +1,5 @@
 'use strict';
+function wrapFlow(z,e,yf){ const m=Math.round(W*.3)+12; if(e.dir<0&&e.x<-m){ e.x=z.len+rnd(14,170); yf(); } else if(e.dir>0&&e.x>z.len+m){ e.x=-m-rnd(0,150); yf(); } }
 // ================= «УСПЕЙ И ВТИСНИСЬ»: поездка = цепочка зон под общим таймером до 09:00 =================
 // TR — состояние поездки; ZONES — типы зон; каждая зона: init(z), update(z,dt), draw(z), ctx(z)→{label,fn,a?}, bot(z)→{x,y,b,a}, prog(z)→число, unstick(z)
 const TR={};
@@ -58,7 +59,7 @@ function mkNpc(type,x,y){ let e; if(type==='granny'){ e=new Actor(x,y,HERO_SPECS
 function crowdStep(list,dt,z){ // разведение капсул + «стены» зоны
   for(let i=0;i<list.length;i++){ const a=list[i]; if(a.ghost) continue; for(let j=i+1;j<list.length;j++){ const b=list[j]; if(b.ghost) continue; const dx=b.x-a.x, dy=(b.y-a.y)*2, d=Math.hypot(dx,dy), R=(a.r+b.r);
     if(d<R&&d>0.001){ const o=(R-d), nx=dx/d, ny=dy/d/2; const wa=a.pin?0:(b.pin?1:b.m/(a.m+b.m)), wb=b.pin?0:(a.pin?1:a.m/(a.m+b.m)); a.x-=nx*o*wa*.5; a.y-=ny*o*wa*.5; b.x+=nx*o*wb*.5; b.y+=ny*o*wb*.5; } } }
-  for(const a of list){ a.y=clamp(a.y,z.y0,z.y1); a.x=clamp(a.x,z.x0!==undefined?z.x0:4,z.len-4); if(z.solids&&!a.noSolid) for(const s of z.solids){ if(a.x>s[0]-a.r&&a.x<s[2]+a.r&&a.y>s[1]-a.r/2&&a.y<s[3]+a.r/2){ // вытолкнуть по меньшей оси
+  for(const a of list){ a.y=clamp(a.y,z.y0,z.y1); if(!a.free) a.x=clamp(a.x,z.x0!==undefined?z.x0:4,z.len-4); if(z.solids&&!a.noSolid) for(const s of z.solids){ if(a.x>s[0]-a.r&&a.x<s[2]+a.r&&a.y>s[1]-a.r/2&&a.y<s[3]+a.r/2){ // вытолкнуть по меньшей оси
       const pl=a.x-(s[0]-a.r), pr=(s[2]+a.r)-a.x, pt=(a.y-(s[1]-a.r/2))*2, pb=((s[3]+a.r/2)-a.y)*2, m=Math.min(pl,pr,pt,pb);
       if(m===pl) a.x=s[0]-a.r; else if(m===pr) a.x=s[2]+a.r; else if(m===pt) a.y=s[1]-a.r/2; else a.y=s[3]+a.r/2; } } } }
 function density(h,list){ let n=0; for(const e of list){ if(e===h||e.ghost) continue; const d=Math.hypot(e.x-h.x,(e.y-h.y)*2); if(d<h.r+e.r+5) n+=e.m; } return n; }

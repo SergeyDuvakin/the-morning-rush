@@ -4,7 +4,7 @@ const PASS_T={tourist:3.2,granny:2.6,mom:2.2,aunt:1.8,bag:2,kid:.6,student:.9,co
 function qType(d){ return pick(['polite','student','aunt','bag','tourist','granny','mom','kid','courier','seeds','trainee'].slice(0,5+Math.min(6,Math.floor(d/2)))); }
 ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · ТУРНИКЕТЫ',
   tip:z=>!canPass()?'нет проезда — иди в КАССУ налево':'встань в очередь; «ВЛЕЗТЬ» рядом с зевакой',
-  init(z){ const W2=Math.max(W,470); z.len=W2; z.TX=W2-120; z.KX=70; z.inQ=null; z.inK=-1; z.passed=false; z.need=false; z.adv=0; z.cutBan=0; z.inviteT=6; z.invite=null; z.vendUsed=false; z.vendAte=false; z.passing=null; z.tbT=0;
+  init(z){ const W2=Math.max(W,470); z.len=W2; z.TX=Math.max(190,Math.min(W2-(z.detector?250:190),Math.round(W*.75)-(z.detector?190:140))); z.KX=70; z.inQ=null; z.inK=-1; z.passed=false; z.need=false; z.adv=0; z.cutBan=0; z.inviteT=6; z.invite=null; z.vendUsed=false; z.vendAte=false; z.passing=null; z.tbT=0;
     const n=z.lanes; z.L=[]; for(let i=0;i<n;i++){ const y=z.y0+16+(z.y1-z.y0-18)*(n===1?.5:i/(n-1)); z.L.push({y,q:[],gT:0,slow:1}); }
     for(let i=0;i<n-1;i++){ const ym=(z.L[i].y+z.L[i+1].y)/2; z.solids.push([z.TX-8,ym-2,z.TX+16,ym+2]); }
     // очереди
@@ -93,7 +93,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
     if(z.botCut===undefined) z.botCut=Math.random()<.5; const n=this.near(z); if(z.botCut&&n&&n.j>0&&n.e.zev&&z.cutBan<=0){ r.b=1; return r; }
     const l=z.L.reduce((a,b)=>a.q.reduce((s,e)=>s+(e.pass||1),0)<=b.q.reduce((s,e)=>s+(e.pass||1),0)?a:b); z.botL=z.botL||l; const L=z.botL; r.x=this.slotX(z,L.q.length); r.y=L.y; return r; },
   draw(z){ const lc=LINE_COL[TR.line%10]; hallBG(z,{wall:'#e2d6b8'}); const c=G.cam, wb=FY0-4;
-    wallSign(z.len/2-40,44,80,14,'ВХОД',lc,'#fff',9);
+    wallSign(z.len/2-40,SIGN_Y(),80,14,'ВХОД',lc,'#fff',9);
     // касса — окошко в стене
     if(z.K){ const kx=Math.round(z.KX-c); ctx.fillStyle=P.ink; ctx.fillRect(kx-20,wb-60,40,52); ctx.fillStyle='#8a6a4a'; ctx.fillRect(kx-19,wb-59,38,50); ctx.fillStyle='#bfe0ff'; ctx.fillRect(kx-14,wb-50,28,22); ctx.fillStyle='#ffd0a8'; ctx.fillRect(kx-5,wb-44,10,10); ctx.fillStyle='#c84a8a'; ctx.fillRect(kx-6,wb-46,12,4); ctx.fillStyle=P.ink; ctx.fillRect(kx-3,wb-40,2,1); ctx.fillRect(kx+1,wb-40,2,1); ctx.fillStyle='#5a3a2a'; ctx.fillRect(kx-16,wb-26,32,6);
       G.labels.push(['КАССА',kx,wb-66,7,P.edge]); if(z.need&&!canPass()) goalArrow(this.kslotX(z,z.K.length),z.y0-50,P.edge); }

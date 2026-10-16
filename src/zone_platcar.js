@@ -1,9 +1,9 @@
 'use strict';
 // ================= ЗОНА: ПЛАТФОРМА — пробиться к дверям =================
 ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛАТФОРМА · БАБУШКА-ТАНК':'ПЛАТФОРМА',
-  tip:z=>'встань у двери (жёлтая стрелка) и жми «ВОЙТИ»; полна — жми «ВТИСНУТЬСЯ»',
+  tip:z=>'встань у двери (жёлтая стрелка) и жми «ВОЙТИ»; полна — жми «ВОЙТИ» много раз',
   init(z){ z.len=Math.max(W,560); const L=z.len; z.ph='arrive'; z.pT=2.2; z.trainX=L+40; z.boarded=false; z.sq=0; z.trains=0;
-    z.doors=[]; if(z.short){ z.doors.push({x:L-70,cap:ri(2,3),n:0,open:0}); } else for(let x=110;x<L-40;x+=Math.max(80,Math.round((L-130)/Math.max(3,Math.round((L-130)/95))))) z.doors.push({x,cap:ri(2,5),n:0,open:0});
+    z.doors=[]; if(z.short){ z.shX=Math.round(Math.min(L*.45,W*.5-70)); z.doors.push({x:z.shX+90,cap:ri(2,3),n:0,open:0}); } else for(let x=110;x<L-40;x+=Math.max(80,Math.round((L-130)/Math.max(3,Math.round((L-130)/95))))) z.doors.push({x,cap:ri(2,5),n:0,open:0});
     if(z.cols){ for(let x=180;x<L-60;x+=150){ z.solids.push([x-6,z.y0+16,x+6,z.y0+26]); } }
     for(let i=0;i<z.crowd;i++){ const d=pick(z.doors); const e=mkNpc(qType(z.d),z.short?rnd(60,L-40):d.x+rnd(-24,24),rnd(z.y0+2,z.y1-6)); e.door=z.short?z.doors[0]:d; e.hx=e.x; e.hy=e.y; z.npcs.push(e); }
     if(z.babatank){ const b=mkNpc('babatank',-20,(z.y0+z.y1)/2); b.ghost=true; z.tank=b; b.st='idle'; z.npcs.push(b); b.hide=true; } },
@@ -35,11 +35,11 @@ ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛА�
     // посадка
     if(open&&!z.boarded){ const d=this.nearDoor(z); z.atDoor=Math.abs(h.x-d.x)<12&&h.y<z.y0+10?d:null; } else z.atDoor=null;
     if(z.boarded){ z.lockHero=true; walkTo(h,z.bd.x,z.y0-14,40,dt); h.y=Math.max(h.y,z.y0-14); z.bT-=dt; if(z.bT<=0&&!z.fin){ z.fin=1; zoneDone(); } }
-    z.hint=z.boarded?'ты в вагоне!':open?(z.atDoor?'ЖМИ «ВОЙТИ»!':'к двери! ↑'):z.ph==='arrive'?'поезд подходит — займи место у двери':'жди следующий поезд';
+    z.hint=z.boarded?'ты в вагоне!':open?(z.atDoor?(z.atDoor.n>=z.atDoor.cap?'ЖМИ «ВОЙТИ» ЧАЩЕ!':'ЖМИ «ВОЙТИ»!'):'к двери! ↑'):z.ph==='arrive'?'поезд подходит — займи место у двери':'жди следующий поезд';
   },
   board(z,d,squeeze){ const h=G.hero; tev(squeeze?'squeeze':'board'); if(z.short) tev('short_board'); z.boarded=true; z.bd=d; z.bT=.9; d.n++; h.pin=true; h.ghost=true; if(z.ph==='closing'&&z.pT<.6){ tev('pinched'); pop('ЗАЖАЛО!',h.x,h.y-52,P.red,9); shake(4); SFX.heavy(); TR.nerves=Math.max(0,TR.nerves-10); } else { pop(squeeze?'ВТИСНУЛСЯ!':'ВОШЁЛ!',h.x,h.y-52,P.neonLime,9); SFX.pick(); } haptic('success'); },
   ctx(z){ const d=z.atDoor; if(!d||z.boarded) return {}; if(d.n<d.cap) return {b:{label:'ВОЙТИ',col:'#2aa860',fn:()=>this.board(z,d)}};
-    return {b:{label:'ВТИСНУТЬСЯ '+Math.round(z.sq*100)+'%',col:'#d87a20',fn:()=>{ z.sq+=.26+(heroId==='baba'?.12:0); shake(1); pop(pick(['ЫЫЫ','ХРУСТ','ВДОХ']),G.hero.x,G.hero.y-50,'#fff',7); if(z.sq>=1){ z.sq=0; this.board(z,d,true); TR.scandal+=10; } }}}; },
+    return {b:{label:'ВОЙТИ',sq:true,col:'#d87a20',fn:()=>{ z.sq+=.26+(heroId==='baba'?.12:0); shake(1); pop(pick(['ЫЫЫ','ХРУСТ','ВДОХ']),G.hero.x,G.hero.y-50,'#fff',7); if(z.sq>=1){ z.sq=0; this.board(z,d,true); TR.scandal+=10; } }}}; },
   prog(z){ const h=G.hero, d=this.nearDoor(z); return (z.boarded?1000:0)-Math.abs(h.x-d.x)-Math.abs(h.y-z.y0)+z.trains*30; },
   unstick(z){ const h=G.hero, d=this.nearDoor(z); h.x=d.x; h.y=z.y0+4; for(const e of z.npcs) if(Math.abs(e.x-d.x)<16&&e.y<z.y0+16) e.y=z.y1; if(z.ph==='open'||z.ph==='closing') this.board(z,d,true); },
   bot(z){ const h=G.hero, d=this.nearDoor(z); const r={x:d.x,y:z.y0}; if(z.tank&&z.tank.go){ r.x=z.tank.x-14; r.y=z.tank.y; } if(z.atDoor) r.b=1; else if(h.den>3&&Math.random()<.04) r.a=1; return r; },
@@ -47,14 +47,14 @@ ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛА�
     // путь
     ctx.fillStyle='#1a1424'; ctx.fillRect(0,wb-62,W,58); ctx.fillStyle='#3a3046'; ctx.fillRect(0,wb-10,W,6);
     // поезд
-    const tx=Math.round(z.trainX-c), ty=wb-58, TL=z.short?140:z.len; const t0=z.short?Math.round(z.len-160+z.trainX-c):tx;
+    const tx=Math.round(z.trainX-c), ty=wb-58, TL=z.short?140:z.len; const t0=z.short?Math.round(z.shX+z.trainX-c):tx;
     if(z.ph!=='leave'||z.trainX>-z.len-50){ ctx.fillStyle=P.ink; ctx.fillRect(t0-1,ty-1,TL+2,52); ctx.fillStyle='#4a6a8a'; ctx.fillRect(t0,ty,TL,50); ctx.fillStyle=lc; ctx.fillRect(t0,ty+34,TL,3);
       for(let x=10;x<TL-20;x+=30){ ctx.fillStyle=P.ink; ctx.fillRect(t0+x,ty+8,20,16); ctx.fillStyle='#ffe9a8'; ctx.fillRect(t0+x+1,ty+9,18,14); }
       for(const d of z.doors){ const dx=Math.round(d.x-c+(z.trainX)), o=Math.round(d.open*8); ctx.fillStyle=P.ink; ctx.fillRect(dx-11,ty+4,22,46); ctx.fillStyle=z.atDoor===d?'#ffe9a8':'#5a7a9a'; ctx.fillRect(dx-10,ty+5,20,44);
         if(d.open>0){ ctx.fillStyle='#2a1a1a'; ctx.fillRect(dx-o,ty+5,o*2,44); ctx.fillStyle='#ffe0a0'; ctx.fillRect(dx-o+1,ty+8,o*2-2,8); }
         ctx.fillStyle='#4a6a8a'; ctx.fillRect(dx-10-o,ty+5,10,44); ctx.fillRect(dx+o,ty+5,10,44); ctx.fillStyle='#bfe0ff'; ctx.fillRect(dx-8-o,ty+9,6,14); ctx.fillRect(dx+o+2,ty+9,6,14);
         if(d.open>0&&d.n>=d.cap){ G.labels.push(['ПОЛНАЯ',dx,ty-6,6,P.red]); } } }
-    if(z.short){ G.labels.push(['ПОЕЗД КОРОТКИЙ — ДВЕРЬ В КОНЦЕ →',Math.round(z.len/2-80-c),ty+20,7,P.edge]); }
+    if(z.short){ G.labels.push(['ДВЕРЬ ТУТ →',Math.round(z.shX-38-c),ty+20,7,P.edge]); }
     ctx.fillStyle='#e8d040'; ctx.fillRect(0,wb+2,W,2);
     hallLight();
     for(const x of z.solids){ const sx=Math.round(x[0]-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-1,0,14,x[3]); ctx.fillStyle='#c8bca0'; ctx.fillRect(sx,0,12,x[3]-1); ctx.fillStyle='#a89c80'; ctx.fillRect(sx+8,0,4,x[3]-1); }

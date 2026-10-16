@@ -30,17 +30,21 @@ tripHUD=function(){ const L=SA.l+4, R=W-SA.r-4, T=SA.t+3, z=TR.z;
   // пауза
   const pb=Math.max(24,44*DPR/SC); buttons.push({x:R-pb,y:T,w:pb,h:pb,id:'pause',cb:()=>{paused=!paused; SFX.ui();}}); ctx.fillStyle='#120c18c0'; ctx.fillRect(R-pb,T,pb,pb); ctx.fillStyle='#fff'; ctx.fillRect(R-pb*.66,T+pb*.28,pb*.12,pb*.44); ctx.fillRect(R-pb*.46,T+pb*.28,pb*.12,pb*.44);
   // две кнопки справа внизу
-  const bh=Math.max(32,56*DPR/SC), bwA=Math.max(76,110*DPR/SC), bxA=R-bwA, byA=H-SA.b-bh-6;
-  actBtn(z&&z.ctxA?z.ctxA.label:'ТОЛКНУТЬ',bxA,byA,bwA,bh,z&&z.ctxA?(z.ctxA.col||'#2aa860'):'#a8264e','A');
-  if(z&&z.ctxB){ const bwB=Math.max(bwA,txtW(z.ctxB.label,9)+18); actBtn(z.ctxB.label,bxA-bwB-8,byA,bwB,bh,z.ctxB.col||'#3a6ad8','B',Math.sin(G.t*8)>0); }
+  const bh=Math.max(24,42*DPR/SC), bwA=Math.max(60,86*DPR/SC), bxA=R-bwA, byA=H-SA.b-bh-4;
+  ctx.globalAlpha=.72; actBtn(z&&z.ctxA?z.ctxA.label:'ТОЛКНУТЬ',bxA,byA,bwA,bh,z&&z.ctxA?(z.ctxA.col||'#2aa860'):'#a8264e','A');
+  if(z&&z.ctxB){ const bwB=Math.max(bwA,txtW(z.ctxB.label,8)+14); actBtn(z.ctxB.label,R-bwB,byA-bh-8,bwB,bh,z.ctxB.col||'#3a6ad8','B',Math.sin(G.t*8)>0); }
+  ctx.globalAlpha=1; if(z&&z.ctxB&&z.ctxB.sq) sqMeter(z);
   drawStick();
   // обучение
   if(TR.tut) drawTut(); };
+function sqMeter(z){ const p=Math.round(Math.min(1,z.sq||0)*100), w=120, x=Math.round(W/2-w/2), y=Math.round(Math.max(SA.t+58,H*.3)); ctx.fillStyle='#120c18c8'; ctx.fillRect(x-6,y-14,w+12,36);
+  G.labels.push(['ВТИСНУТЬСЯ  '+p+'%',W/2,y-4,11,Math.sin(G.t*10)>0?'#ffd23f':'#fff']); ctx.fillStyle=P.ink; ctx.fillRect(x-1,y+7,w+2,9); ctx.fillStyle='#d87a20'; ctx.fillRect(x,y+8,Math.round(w*p/100),7); }
+window.__sqMeter=1;
 // ---------- обучение: короткая карточка при первой встрече с зоной ----------
 const TUT31={gate:['ТУРНИКЕТЫ','Встань в хвост очереди и жди. Рядом с зевакой в телефоне жми «ВЛЕЗТЬ». Нет проезда — касса слева.'],
   esc:['ЭСКАЛАТОР','Справа стоят. Шагни джойстиком влево и жми кнопку — пойдёшь пешком быстрее.'],
   passage:['ПЕРЕХОД','Иди вправо. Встречных обходи. Зевак у музыканта разгонят чаевые.'],
-  plat:['ПЛАТФОРМА','Встань у двери. Когда откроется — жми «ВОЙТИ». Полная — жми «ВТИСНУТЬСЯ» много раз.'],
+  plat:['ПЛАТФОРМА','Встань у двери. Когда откроется — жми «ВОЙТИ». Полная — жми «ВОЙТИ» много раз, следи за % в центре.'],
   car:['ВАГОН','Займи свободное место (мигает зелёным) или держись за поручень. Мигает «!» — сейчас тряхнёт.'],
   exitz:['ВЫХОД','Последний рывок: обходи встречных и беги вправо.'],escape:['ПРОБИТЬСЯ','20 секунд. Двери откроются на 8 секунд — доберись и жми «ВЫЙТИ».']};
 function tutCheck(){ const z=TR.z; if(!z||TR.tut||TR.mode==='learn') return; save.tut=save.tut||{}; if(!save.tut[z.k]&&TUT31[z.k]&&!window.__noTut){ save.tut[z.k]=1; store(); TR.tut={k:z.k,t:0}; } }

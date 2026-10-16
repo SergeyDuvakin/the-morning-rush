@@ -13,6 +13,7 @@ function hallBG(z,o={}){ const cam=G.cam, lc=LINE_COL[TR.line%10]; const wallB=F
   wallFog(wallB);
   ctx.fillStyle=o.floor||'#7a7080'; ctx.fillRect(0,wallB,W,H-wallB); ctx.fillStyle=P.ink; ctx.fillRect(0,wallB,W,1); persFloor(cam,o.floor2||'#6a6070',34); }
 function hallLight(){ floorAO(); lampPools(G.cam); }
+window.SIGN_Y=()=>Math.max(66,Math.min(FY0-60,Math.round(H*.24)));
 function wallSign(x,y,w,h,txt,col,tcol='#fff',size=8){ const sx=Math.round(x-G.cam); if(sx+w<-10||sx>W+10) return; ctx.fillStyle=P.ink; ctx.fillRect(sx-1,y-1,w+2,h+2); ctx.fillStyle=col; ctx.fillRect(sx,y,w,h); G.labels.push([txt,sx+w/2,y+h/2,size,tcol]); }
 function drawTripActors(list){ const arr=[...list].sort((a,b)=>a.y-b.y); for(const a of arr){ if(a.hide) continue;
     if(a===G.hero){ ctx.save(); ctx.filter='brightness(0) invert(1)'; for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){ ctx.save(); ctx.translate(dx,dy); drawActor(a); ctx.restore(); } ctx.restore(); }

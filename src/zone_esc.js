@@ -30,15 +30,16 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
     if(z.lane===1&&z.mode!=='stairs'){ if(b&&b.s-z.s<1.6){ bubble(b.a,pick(['Не толкайтесь!','Стойте справа!','Куда торопимся?']),1.2); TR.scandal+=4; return; } }
     if(b&&b.s-z.s<1.3){ if(b.blk&&!b.leaveT){ bubble(b.a,pick(['Я тут стою.','Мне тоже на работу.','…']),1.1); } return; }
     z.s+=1; z.hop=1; tev(z.mode==='stairs'?'stairs_step':'esc_step'); const nn=[0,2,4,5,7,9,11]; tone(mtof(72+nn[Math.floor(z.s)%7]),.06,'square',.1); },
+  swap(z){ const want=1-z.lane, h=G.hero; if(!z.ppl.some(p=>p.lane===want&&Math.abs(p.s-z.s)<1.1)){ z.lane=want; z.swT=.3; tev('esc_switch'); SFX.ui(); } else pop('некуда!',h.x,h.y-50,'#ccc',7); },
   ctx(z){ const r={}; const b=this.ahead(z,z.lane,z.s);
     r.b={label:z.mode==='stairs'?'ШАГ':z.lane===0?'ИДТИ СЛЕВА':'ТОРОПИТЬСЯ',col:'#3a6ad8',fn:()=>this.step(z)};
     if(b&&b.blk&&b.s-z.s<2&&!b.leaveT) r.a={label:'ПРОПУСТИТЕ!',col:'#d87a20',fn:()=>{ tev('esc_ask'); if(Math.random()<.6){ b.leaveT=.8; bubble(b.a,'Ой, проходите',1); } else { bubble(b.a,'Мне тоже некуда!',1.2); TR.scandal+=8; } }};
-    else r.a={label:'ТОРОПИТЬСЯ',col:'#2a4aa8',fn:()=>this.step(z)};
+    else r.a={label:z.lane===1?'← ВЛЕВО':'ВПРАВО →',col:'#2a4aa8',fn:()=>this.swap(z)};
     return r; },
   prog(z){ return z.s*12; }, unstick(z){ for(const p of z.ppl) if(p.lane===z.lane&&p.s>z.s&&p.s<z.s+4) { p.lane=1-p.lane; p.blk=false; } z.s=Math.min(z.N,z.s+6); },
   bot(z){ const r={x:G.hero.x,y:G.hero.y}; const b=this.ahead(z,z.lane,z.s);
     if(z.lane===1&&z.mode!=='stairs'&&!z.ppl.some(p=>p.lane===0&&Math.abs(p.s-z.s)<1.2)) { r.stick={x:-1,y:-.2}; return r; }
-    if(b&&b.blk&&b.s-z.s<2) { r.a=1; return r; } if(b&&b.s-z.s<1.4&&z.mode==='stairs'){ const o=1-z.lane; if(!z.ppl.some(p=>p.lane===o&&Math.abs(p.s-z.s)<1.2)) { r.stick={x:o?1:-1,y:0}; return r; } }
+    if(b&&b.blk&&b.s-z.s<2&&!b.leaveT) { r.a=1; return r; } if(b&&b.s-z.s<1.4&&z.mode==='stairs'){ const o=1-z.lane; if(!z.ppl.some(p=>p.lane===o&&Math.abs(p.s-z.s)<1.2)) { r.stick={x:o?1:-1,y:0}; return r; } }
     r.b=1; return r; },
   draw(z){ const lc=LINE_COL[TR.line%10]; ctx.fillStyle='#2a2236'; ctx.fillRect(0,0,W,H); const A=this.pos(z,-3,0), B=this.pos(z,z.N+3,0);
     // свод тоннеля: полосы
@@ -60,14 +61,14 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
 ZONES.exitz={ title:z=>z.rain?'ДОЖДЛИВЫЙ ВЕСТИБЮЛЬ':'ВЫХОД В ГОРОД',
   tip:z=>'иди вправо, обходи встречных; ТОЛКНУТЬ — если совсем зажали',
   init(z){ z.len=Math.max(W,520)+z.d*4; z.wet=!!z.rain; z.spawnT=0;
-    for(let i=0;i<z.crowd;i++){ const e=mkNpc(qType(z.d),rnd(80,z.len-40),rnd(z.y0,z.y1)); e.dir=Math.random()<.65?-1:1; e.spd2=rnd(22,40); if(z.rain&&Math.random()<.5) e.umb=pick(['#d8265e','#3d6ff0','#19b874','#1a1a1a']); z.npcs.push(e); } },
-  update(z,dt){ const h=G.hero; for(const e of z.npcs){ e.x+=e.dir*e.spd2*dt; e.face=e.dir; e.set('walk'); if(e.x<-10||e.x>z.len+10){ e.x=e.dir<0?z.len+6:-6; e.y=rnd(z.y0,z.y1); } e.y+=Math.sin(G.t*1.3+e.anT)*dt*6; }
+    for(let i=0;i<z.crowd;i++){ const e=mkNpc(qType(z.d),rnd(80,z.len-40),rnd(z.y0,z.y1)); e.dir=Math.random()<.65?-1:1; e.spd2=rnd(22,40); e.free=1; if(z.rain&&Math.random()<.5) e.umb=pick(['#d8265e','#3d6ff0','#19b874','#1a1a1a']); z.npcs.push(e); } },
+  update(z,dt){ const h=G.hero; for(const e of z.npcs){ e.x+=e.dir*e.spd2*dt; e.face=e.dir; e.set('walk'); wrapFlow(z,e,()=>{ e.y=rnd(z.y0,z.y1); }); e.y+=Math.sin(G.t*1.3+e.anT)*dt*6; }
     if(z.rain&&Math.abs(h.vx)>60&&Math.random()<dt*.6&&!h.stun){ tev('rain_slip'); h.stun=.6; h.vx*=.3; pop('СКОЛЬЗКО!',h.x,h.y-50,'#9cf',7); SFX.land(); }
     if(h.x>z.len-26) zoneDone(); z.hint='ВЫХОД В ГОРОД →'; },
   ctx(z){ return {}; }, prog(z){ return G.hero.x; }, unstick(z){ G.hero.x+=40; for(const e of z.npcs) if(Math.abs(e.x-G.hero.x)<40) e.y=e.y<G.hero.y?z.y0:z.y1; },
   bot(z){ const h=G.hero; let ty=h.y; for(const e of z.npcs){ if(e.x>h.x&&e.x<h.x+30&&Math.abs(e.y-h.y)<10) ty=e.y>h.y?h.y-14:h.y+14; } return {x:z.len,y:clamp(ty,z.y0,z.y1),a:h.den>4&&Math.random()<.05?1:0}; },
   draw(z){ hallBG(z,{wall:z.rain?'#c8c4b8':'#e8dcc0',floor:z.rain?'#5a6070':'#7a7080'}); const c=G.cam;
-    wallSign(z.len-130,44,110,14,'ВЫХОД В ГОРОД ↑',LINE_COL[TR.line%10],'#fff',8);
+    wallSign(z.len-130,SIGN_Y(),110,14,'ВЫХОД В ГОРОД ↑',LINE_COL[TR.line%10],'#fff',8);
     // двери на улицу
     const dx=Math.round(z.len-60-c); ctx.fillStyle=P.ink; ctx.fillRect(dx-4,FY0-74,64,74); ctx.fillStyle=z.rain?'#7a8aa0':'#bfe0ff'; ctx.fillRect(dx-2,FY0-72,60,70); ctx.fillStyle=P.ink; ctx.fillRect(dx+27,FY0-72,2,70);
     if(z.rain){ ctx.fillStyle='#ffffff60'; for(let i=0;i<24;i++){ const x=(i*37+BG.t*30)%60, y=(i*53+BG.t*220)%70; ctx.fillRect(dx-2+x,FY0-72+y,1,4); } ctx.fillStyle='rgba(150,190,255,.12)'; for(let i=0;i<8;i++) ctx.fillRect(Math.round(((i*97)%z.len)-c),FY0+8+(i*13)%40,40,2); }

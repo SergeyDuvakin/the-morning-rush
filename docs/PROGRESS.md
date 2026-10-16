@@ -81,3 +81,7 @@ Perf: 60 fps headless; render 1.5–5.8 ms/frame at DPR3 (desktop CPU).
 - 00:15 Матрица (фон, /tmp/m31): units 37/37, regress 844 65/65, v31 844/740 29/29; trip_all 45/48 побед, 3 таймаута теста (11,16,21 — не застревание, tLeft>0, нагрузка ЦП) → лимит trip_run 420 с, перепрогон.
 - 01:00 progress (свежий сейв, 24 поездки): все 24 открыты, MISMATCH 0, ERRS 0. regress 844/740/932 65/65, 667 63/65 (escape idle — флейк под нагрузкой, отдельно воспроизводится чисто) → перепрогон 667 и станций 11,16,21 в фоне.
 - 01:05 Перепрогон: regress 667×375 65/65; станции 11,16,21 ×2 — 6/6 побед, wd 0, ERRS 0. Итог: матрица чистая. Сборка davka_v3_1.zip.
+## v3.2 (started 12:12)
+- 12:14 v3.2 edits done (ВОЙТИ+центр-метр, TX левее, SIGN_Y, wrapFlow/free, кнопки в углу 0.72). test/v32.js 14/14 @844. Матрица: bash test/matrix32.sh → /tmp/m32
+- 12:40 +short train (shX) +esc distinct labels (swap); v32 16/16@740. Перезапуск матрицы /tmp/m32
+- 12:50 v3.2 targeted: v32 16/16 ×4 sizes, units 37/37, v31@844 29/29 (learn bot 12/12), trips st5(guard),st9(short),st12@667 win wd0 ERRS0. Полная матрица остановлена по просьбе. Zip davka_v3_2.zip.

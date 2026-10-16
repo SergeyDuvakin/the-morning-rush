@@ -5,7 +5,7 @@ ZONES.passage={ title:z=>z.title||(z.flow==='headon'?'УЗКИЙ ПЕРЕХОД'
   init(z){ const F=z.feat; z.len=Math.max(W,360+F.length*170+(z.flow==='headon'?120:0)); z.seg={}; let x=200; for(const f of F){ z.seg[f]=x; x+=170; }
     if(z.flow==='headon'){ const m=(z.y0+z.y1)/2; z.ny0=m-12; z.ny1=m+12; z.hx0=x-60; z.hx1=z.len-50; z.solids.push([z.hx0,z.y0-10,z.hx1,z.ny0-1],[z.hx0,z.ny1+1,z.hx1,z.y1+10]); }
     // потоки
-    const n=10+Math.min(20,Math.round(z.d*.7))+Math.floor(z.d/8)*3; for(let i=0;i<n;i++){ const e=mkNpc(qType(z.d),rnd(40,z.len-20),rnd(z.y0,z.y1)); e.dir=e.y<(z.y0+z.y1)/2?-1:1; if(z.flow==='headon'&&e.x>z.hx0) { e.dir=-1; e.y=rnd(z.ny0,z.ny1); } e.sp=rnd(24,40); e.flow=1; z.npcs.push(e); }
+    const n=10+Math.min(20,Math.round(z.d*.7))+Math.floor(z.d/8)*3; for(let i=0;i<n;i++){ const e=mkNpc(qType(z.d),rnd(40,z.len-20),rnd(z.y0,z.y1)); e.dir=e.y<(z.y0+z.y1)/2?-1:1; if(z.flow==='headon'&&e.x>z.hx0) { e.dir=-1; e.y=rnd(z.ny0,z.ny1); } e.sp=rnd(24,40); e.flow=1; e.free=1; z.npcs.push(e); }
     if(F.includes('kiosk')){ const k=z.seg.kiosk; z.kiosk=[k-50,k+70]; const v=mkNpc('aunt',k+10,z.y0+4); v.vendor=1; v.hx=k+10; z.npcs.push(v); z.vendor=v; z.vT=2; }
     if(F.includes('musician')){ const m=z.seg.musician, my=(z.y0+z.y1)/2; const mu=mkNpc('musician',m,my); mu.pin=true; mu.m=30; z.npcs.push(mu); z.mus=mu; z.ring=[]; for(let i=0;i<9;i++){ const a=i/9*Math.PI*2; const e=mkNpc(pick(['polite','student','tourist','aunt','kid']),m+Math.cos(a)*26,clamp(my+Math.sin(a)*18,z.y0,z.y1)); e.pin=true; e.m=8; e.ring=1; e.face=Math.cos(a)>0?-1:1; z.npcs.push(e); z.ring.push(e); } z.tipped=false; }
     if(F.includes('walkway')){ const w=z.seg.walkway; z.ww=[w-60,w+110]; z.wy=[z.y0+14,z.y1-14]; for(let i=0;i<2+(z.d>12?1:0);i++){ const e=mkNpc(pick(['tourist','aunt','statue']),w-30+i*50,(z.wy[0]+z.wy[1])/2+rnd(-4,4)); e.onWW=1; e.pin=true; e.m=5; z.npcs.push(e); } }
@@ -16,7 +16,7 @@ ZONES.passage={ title:z=>z.title||(z.flow==='headon'?'УЗКИЙ ПЕРЕХОД'
   update(z,dt){ const h=G.hero;
     for(const e of z.npcs){ if(e.flow){ if(e.blockT>0){ e.blockT-=dt; e.set('idle'); continue; } { const dx=(G.hero.x-e.x)*e.dir; if(dx>0&&dx<18&&Math.abs(G.hero.y-e.y)<10&&z.flow!=='headon'){ e.y+=(e.y<G.hero.y?-1:1)*26*dt; } } if(z.rep&&e.x>z.rep.x-30&&e.x<z.rep.x+70){ const gy=z.rep.gapTop?z.y0+5:z.y1-5; e.y+=(gy-e.y)*Math.min(1,dt*3); }
         e.stk=(e.stk||0)+dt; if(e.stk>1){ if(Math.abs(e.x-(e.lx||0))<6){ e.noSolid=true; e.nsT=2; } e.lx=e.x; e.stk=0; } if(e.nsT>0){ e.nsT-=dt; if(e.nsT<=0) e.noSolid=false; }
-        e.x+=e.dir*e.sp*dt; e.face=e.dir; e.set('walk'); if(e.x<-8||e.x>z.len+8){ e.x=e.dir<0?z.len+6:-6; if(z.flow==='headon'&&e.dir<0){ e.y=rnd(z.ny0,z.ny1); } else e.y=e.dir<0?rnd(z.y0,(z.y0+z.y1)/2):rnd((z.y0+z.y1)/2,z.y1); } }
+        e.x+=e.dir*e.sp*dt; e.face=e.dir; e.set('walk'); wrapFlow(z,e,()=>{ if(z.flow==='headon'&&e.dir<0){ e.y=rnd(z.ny0,z.ny1); } else e.y=e.dir<0?rnd(z.y0,(z.y0+z.y1)/2):rnd((z.y0+z.y1)/2,z.y1); }); }
       else if(e.onWW&&!e.ring){ e.x+=40*dt; if(e.x>z.ww[1]){ e.x=z.ww[0]+4; pop('ОЙ!',e.x+100,e.y-50,'#fff',6); } e.set('idle'); }
       else if(e.parting){ walkTo(e,e.px,e.py,50,dt); } }
     z.slow=1; z.wet=false;
@@ -53,7 +53,7 @@ ZONES.passage={ title:z=>z.title||(z.flow==='headon'?'УЗКИЙ ПЕРЕХОД'
     else { for(const e of z.npcs){ if(e.flow&&e.dir<0&&e.x>h.x&&e.x<h.x+30&&Math.abs(e.y-h.y)<10) r.y=clamp(h.y+(e.y>h.y?-16:16),z.y0,z.y1); } }
     return r; },
   draw(z){ const c=G.cam, lc=LINE_COL[TR.line%10], wb=FY0-4; hallBG(z,{wall:'#cfc8d8',grout:'#b8b0c4',floor:'#6a6474'});
-    wallSign(40,44,150,14,'ПЕРЕХОД · ДЕРЖИТЕСЬ ПРАВЕЕ',lc,'#fff',7);
+    wallSign(40,SIGN_Y(),150,14,'ПЕРЕХОД · ДЕРЖИТЕСЬ ПРАВЕЕ',lc,'#fff',7);
     if(z.kiosk){ for(let x=z.kiosk[0];x<z.kiosk[1];x+=40){ const sx=Math.round(x-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-1,wb-62,38,60); ctx.fillStyle=['#d8a020','#c84a3a','#3a8a5a'][(x/40|0)%3]; ctx.fillRect(sx,wb-61,36,12); ctx.fillStyle='#ffe9a8'; ctx.fillRect(sx+2,wb-46,32,30); ctx.fillStyle='#8a5a3a'; ctx.fillRect(sx,wb-14,36,12); }
       G.labels.push(['ШАУРМА · ЧЕБУРЕКИ · ЧЕХЛЫ',Math.round((z.kiosk[0]+z.kiosk[1])/2-c),wb-68,6,'#ffb84a']); if(Math.floor(G.t*3)%2){ ctx.fillStyle='rgba(255,200,120,.10)'; ctx.fillRect(Math.round(z.kiosk[0]-c),FY0,z.kiosk[1]-z.kiosk[0],FY1-FY0); } }
     if(z.svc){ const sx=Math.round(z.svc.x-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-12,wb-60,24,60); ctx.fillStyle=z.svc.used?'#5a5a6a':'#7a8a7a'; ctx.fillRect(sx-11,wb-59,22,58); G.labels.push(['СЛУЖЕБНЫЙ',sx,wb-66,6,P.red]); }
