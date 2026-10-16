@@ -8,7 +8,7 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
     const nl=z.mode==='stairs'?3+Math.min(4,d>>2):1+Math.min(4,d>>2); for(let i=0;i<nl;i++){ const s=rnd(4,z.N-3); if(z.ppl.some(p=>p.lane===0&&Math.abs(p.s-s)<2.5)) continue; z.ppl.push({lane:0,s,a:mkNpc(z.mode==='stairs'?'granny':qType(d),0,0),stand:true,v:0,blk:true}); }
     for(let i=0;i<2;i++) z.ppl.push({lane:0,s:rnd(-6,-1),a:mkNpc('courier',0,0),stand:false,v:2.4});
     for(const p of z.ppl){ p.a.face=1; p.a.pin=true; } z.y0=0; z.y1=H; },
-  pos(z,s,lane){ const k=s/z.N; return {x:60+k*(W-150)+(lane===0?-6:6), y:40+k*(H-96)+(lane===0?-8:6)}; },
+  pos(z,s,lane){ const k=s/z.N; return {x:70+k*(W-250)+(lane===0?-6:6), y:40+k*(H-96)+(lane===0?-8:6)}; },
   ahead(z,lane,s){ let b=null; for(const p of z.ppl) if(p.lane===lane&&p.s>s&&(!b||p.s<b.s)) b=p; return b; },
   update(z,dt){ const h=G.hero; z.tapT-=dt; const st=stickVec();
     // смена ряда

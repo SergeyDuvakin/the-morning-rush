@@ -9,7 +9,7 @@ function hallBG(z,o={}){ const cam=G.cam, lc=LINE_COL[TR.line%10]; const wallB=F
     x.fillStyle=shade(wall,-.3); x.fillRect(0,wallB-8,SW,8);
     for(let i=0;i*64<SW+64;i++){ const lx=i*64+20; x.fillStyle=P.ink; x.fillRect(lx-9,2,22,5); x.fillStyle=P.lampHot; x.fillRect(lx-8,3,20,3); }
     c=cv; HBC.set(key,c); }
-  ctx.drawImage(c,-(px%320),0);
+  ctx.drawImage(c,-(((px%320)+320)%320),0);
   wallFog(wallB);
   ctx.fillStyle=o.floor||'#7a7080'; ctx.fillRect(0,wallB,W,H-wallB); ctx.fillStyle=P.ink; ctx.fillRect(0,wallB,W,1); persFloor(cam,o.floor2||'#6a6070',34); }
 function hallLight(){ floorAO(); lampPools(G.cam); }

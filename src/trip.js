@@ -33,18 +33,18 @@ lineOpen=function(w){ return G.cheat||tripPts()>=ST_THR[w*8]; };
 // ---------- состав поездки по станции ----------
 function stationTrip(idx){ const w=Math.floor(idx/8), i=idx%8, d=idx; const L=LEVELS[idx];
   const has=id=>{ const l=LOC.find(l=>l[0]===id); return l&&l[1]<=idx; }; // место уже введено к этой станции
-  const z=[]; const gate={k:'gate',lanes:i===0&&w===0?2:3,qmin:1+Math.floor(d/6),qmax:3+Math.floor(d/4),kassa:true,vend:has('vend')&&d%3!==2,detector:has('detector')&&(d===5||d%4===1),turnboss:idx===15};
+  const z=[]; const gate={k:'gate',lanes:i===0&&w===0?2:3,qmin:2+Math.floor(d/6)+w,qmax:4+Math.floor(d/4)+w,kassa:true,vend:has('vend')&&d%3!==2,detector:has('detector')&&(d===5||d%4===1),turnboss:idx===15};
   z.push(gate);
   const down=idx===6||(has('stairs')&&d%5===1&&idx>6)?{k:'esc',mode:'stairs'}:has('esc')?{k:'esc',mode:'esc'}:null;
   const pass=has('kiosk')&&(idx===3||d%3===0)?{k:'passage',title:'ПОДЗЕМНЫЙ ПЕРЕХОД',feat:['kiosk'].concat(has('lost')&&d%2===0?['lost']:[]),flow:'two'}:null;
   if(pass) z.push(pass); if(down) z.push(down);
-  const plat={k:'plat',short:idx===9||(has('short')&&d%4===2&&idx>9),babatank:idx===7,cols:idx===2||d%5===2,openT:Math.max(4.5,9-d*.18),crowd:10+Math.min(18,d)};
-  const car={k:'car',stops:1+(d>8?1:0),ride:16+Math.min(10,d*.5),sway:2.8+d*.06,seats:Math.max(1,4-Math.floor(d/7)),gangway:has('gangway')&&(idx===17||d%3===0),terminal:idx===18||(has('terminal')&&d%4===3&&idx>18),controller:idx===23,crowd:8+Math.min(14,d)};
+  const plat={k:'plat',short:idx===9||(has('short')&&d%4===2&&idx>9),babatank:idx===7,cols:idx===2||d%5===2,openT:Math.max(4.5,9-d*.18-w*.8),crowd:14+Math.min(26,Math.round(d*1.1))+w*3};
+  const car={k:'car',stops:2+(d>8?1:0),ride:28+Math.min(12,d*.5),sway:Math.max(3.6,6-d*.1),seats:Math.max(1,4-Math.floor(d/7)),gangway:has('gangway')&&(idx===17||d%3===0),terminal:idx===18||(has('terminal')&&d%4===3&&idx>18),controller:idx===23,crowd:10+Math.min(18,d)+w*2};
   z.push(plat,car);
   if(has('transfer')&&(idx===8||idx===11||idx===13||d%2===0||idx>=19)){ const tf={k:'passage',title:'ПЕРЕХОД НА ДРУГУЮ ЛИНИЮ',flow:idx===11||(has('headon')&&d%3===2)?'headon':'two',feat:[]};
     if(idx===8||(d%3===1)) tf.feat.push('musician'); if(idx===10||(has('walkway')&&d%3===0)) tf.feat.push('walkway'); if(idx===12||(has('repairs')&&d%4===0)) tf.feat.push('repairs'); if(idx===13||(has('service')&&d%3===2)) tf.feat.push('service'); if(idx===16||(has('lost')&&d%4===1)) tf.feat.push('lost'); if(has('vend')&&d%5===3) tf.feat.push('vendp'); if(has('kiosk')&&d%4===2) tf.feat.push('kiosk');
     z.push(tf); z.push({k:'esc',mode:has('stairs')&&d%2===1?'stairs':'esc'}); z.push(Object.assign({},plat,{babatank:false,short:false})); z.push(Object.assign({},car,{gangway:false,terminal:car.terminal,stops:1})); car.terminal=false; }
-  z.push({k:'exitz',rain:idx===14||(has('rain')&&d%3===1&&idx>14),crowd:6+Math.min(12,d)});
+  z.push({k:'exitz',rain:idx===14||(has('rain')&&d%3===1&&idx>14),crowd:9+Math.min(16,d)+w*3});
   z.forEach(q=>q.d=d);
   return z; }
 // ---------- общая физика толпы ----------
@@ -119,9 +119,10 @@ function tripUpdate(dt){ const h=G.hero, z=TR.z; if(!z) return;
   // сторож: нет прогресса 10 с — подсказка, 18 с — зона помогает сама
   const p=ZONES[z.k].prog(z); if(p>TR.wd.best+4){ TR.wd.best=p; TR.wd.t=0; } else TR.wd.t+=dt;
   if(TR.wd.t>10&&!z.hintShown){ z.hintShown=true; say('Подсказка: '+(ZONES[z.k].tip?ZONES[z.k].tip(z):'жми ТОЛКНУТЬ и иди вперёд'),2.6,P.neonCyan); }
+  { const lim=z.k==='gate'?40:z.k==='car'?(z.ride||30)+40:70; if(z.t>lim+(z.hardN||0)*20){ z.hardN=(z.hardN||0)+1; TR.wd.fired++; tev('wd_hard_'+z.k); ZONES[z.k].unstick(z); say('Толпа сама расступилась…',1.6,'#ccc'); } }
   if(TR.wd.t>18){ TR.wd.t=0; TR.wd.fired++; tev('wd_'+z.k); z.hintShown=false; ZONES[z.k].unstick(z); say('Толпа сама расступилась…',1.6,'#ccc'); }
   // камера
-  const tx=clamp(h.x-W*.42,0,Math.max(0,z.len-W)); G.cam+=(tx-G.cam)*Math.min(1,dt*6);
+  const tx=z.k==='esc'?0:clamp(h.x-W*.42,-Math.round(W*.25),Math.max(0,z.len-W)); G.cam+=(tx-G.cam)*Math.min(1,dt*6);
   G.shake=Math.max(0,G.shake-dt*14); updFX(dt);
   for(const q of G.pops){ q.t+=dt; } G.pops=G.pops.filter(q=>q.t<q.life);
   BG.t+=dt;

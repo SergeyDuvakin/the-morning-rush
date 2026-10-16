@@ -70,3 +70,14 @@ Perf: 60 fps headless; render 1.5–5.8 ms/frame at DPR3 (desktop CPU).
 - (19:55) Fixes: 4-lane gates removed (rails trapped hero at TX-14) + noSolid while passing turnstile; flow NPCs steer to repairs gap and squeeze through when stuck (wd in passage@12); bot approaches top-wall targets along the with-flow side; map МЕНЮ moved into header. NEXT: verify wd12, then final full regression (trip_all ×2, units, regress ×4 sizes, progress), shots, zip.
 - (20:05) Final run: units 37/37; trip_all 48/48 wins, 0 watchdog, 0 errors (4 sizes). NEXT: regress ×4 sizes + progress.
 - (20:17) regress 65/65 at 844x390, 740x360, 932x430, 667x375; progress from fresh save: all 24 open after 24 trips, 0 mismatches. NEXT: shots + zip.
+- (20:25) Built /workspace/davka_v3.zip; best shots in shots/best/. DONE.
+## v3.1 playtest fixes (22:30)
+- Шаги 1–3: заставка (флаг intro31 + кнопка ЗАСТАВКА), новое меню (ИГРАТЬ / ОБУЧЕНИЕ / ПРОБИТЬСЯ / КОШЕЛЁК / ЗАСТАВКА), минимальный HUD (часы, строка цели), фиксированный джойстик + камера со сдвигом −W/4.
+- Шаг 4–5: вагон медленнее (ride 28+, 2–3 остановки, предупреждение «!» за 1.6 с, медленные конкуренты в начале, подсветка мест/поручней); толпа ×1.3 и рост по веткам 2–3.
+- Обучение (learn.js): 12 шагов, ждёт выполнения, без 09:00, кнопка ПРОПУСТИТЬ, повтор из меню.
+- Экономика (econ.js): полоска кошелька с иконками, касса = 4 карточки, страница КОШЕЛЁК.
+- Карта (map31.js): пиксельная схема, замки+очки, пульс «ТЫ ТУТ», звёзды, поезд и голубь, карточка станции.
+- 23:40 Тесты v31.js (29 проверок: меню, кошелёк, касса, обучение ботом, карта, концовки) — 29/29. Фиксы: «Проходите!» вставлял героя на место проходящего (сирота в очереди) → вставка за благодетелем + страж сироты; жёсткий сторож по времени зоны; unstick в очереди ставит героя прямо к турникету.
+- 00:15 Матрица (фон, /tmp/m31): units 37/37, regress 844 65/65, v31 844/740 29/29; trip_all 45/48 побед, 3 таймаута теста (11,16,21 — не застревание, tLeft>0, нагрузка ЦП) → лимит trip_run 420 с, перепрогон.
+- 01:00 progress (свежий сейв, 24 поездки): все 24 открыты, MISMATCH 0, ERRS 0. regress 844/740/932 65/65, 667 63/65 (escape idle — флейк под нагрузкой, отдельно воспроизводится чисто) → перепрогон 667 и станций 11,16,21 в фоне.
+- 01:05 Перепрогон: regress 667×375 65/65; станции 11,16,21 ×2 — 6/6 побед, wd 0, ERRS 0. Итог: матрица чистая. Сборка davka_v3_1.zip.

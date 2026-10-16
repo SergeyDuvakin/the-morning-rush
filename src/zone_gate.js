@@ -19,7 +19,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
   addQ(z,l,e){ e.lane=l; e.pass=(PASS_T[e.type]||rnd(.8,1.5))*(z.turnboss?1.2:1); e.zev=Math.random()<.28; l.q.push(e); if(!z.npcs.includes(e)) z.npcs.push(e); },
   slotX(z,j){ return z.TX-14-j*14; },
   kslotX(z,j){ return z.KX+16+j*14; },
-  update(z,dt){ const h=G.hero; z.cutBan-=dt;
+  update(z,dt){ const h=G.hero; z.cutBan-=dt; if(z.inQ&&z.inQ.q.indexOf(h)<0&&!h.passing&&!z.passed){ z.inQ=null; z.lockHero=false; h.pin=false; tev("q_orphan"); }
     // мутант: зелёный/красный
     if(z.turnboss){ z.tbT+=dt; z.green=(z.tbT%2.6)<1.2; }
     // дорожки
@@ -67,7 +67,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
   },
   near(z){ const h=G.hero; let best=null, bd=1e9; for(const l of z.L) l.q.forEach((e,j)=>{ if(e===h) return; const d=Math.hypot(e.x-h.x,(e.y-h.y)*2); if(d<22&&d<bd&&j<l.q.length){ bd=d; best={e,l,j}; } }); return best; },
   ctx(z){ const h=G.hero, w=wallet(); const r={};
-    if(z.invite&&z.inQ) r.b={label:'ДА, СПАСИБО!',col:'#2aa860',fn:()=>{ const l=z.inQ, j=l.q.indexOf(h), e=z.invite.e, k=l.q.indexOf(e); if(j>0&&k>=0){ l.q.splice(j,1); l.q.splice(Math.max(0,k-1),0,h); TR.polite++; tev('invite'); pop('ВЕЖЛИВОСТЬ +20',h.x,h.y-56,P.neonLime,8); bubble(e,'Пожалуйста!',1); } z.invite=null; }};
+    if(z.invite&&z.inQ) r.b={label:'ДА, СПАСИБО!',col:'#2aa860',fn:()=>{ const l=z.inQ, j=l.q.indexOf(h), e=z.invite.e, k=l.q.indexOf(e); if(j>0&&k>=0){ l.q.splice(j,1); l.q.splice(Math.max(1,k),0,h); TR.polite++; tev('invite'); pop('ВЕЖЛИВОСТЬ +20',h.x,h.y-56,P.neonLime,8); bubble(e,'Пожалуйста!',1); } z.invite=null; }};
     else if(z.inK>0&&z.K[0]===h){ r.b={label:w.coins>=5?'ЖЕТОН · 5 мон.':'В ДОЛГ (−15 с)',col:'#d8a020',fn:()=>{ if(w.coins>=5){ tev('buy_token'); w.coins-=5; w.tokens++; } else { tev('buy_debt'); w.tokens++; TR.tLeft-=15; pop('−15 с',h.x,h.y-56,P.red,9); } this.leaveK(z,'Жетон куплен!'); }};
       if(w.coins>=40) r.a={label:'ПРОЕЗДНОЙ×10 · 40',col:'#2aa860',fn:()=>{ tev('buy_pass'); w.coins-=40; w.rides+=10; this.leaveK(z,'Проездной на 10 поездок!'); }};
       else if(w.coins>=25) r.a={label:'БЕЗЛИМИТ ДЕНЬ · 25',col:'#2aa860',fn:()=>{ tev('buy_unlim'); w.coins-=25; w.unlim=mskDay(); this.leaveK(z,'Безлимит до полуночи!'); }}; }
@@ -80,7 +80,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
   cut(z,n){ const h=G.hero, {e,l,j}=n; const ok=Math.random()<(e.zev?.88:.3); if(ok){ tev('cut_ok'); l.q.splice(j,0,h); z.inQ=l; TR.scandal+=e.zev?6:18; bubble(e,e.zev?'…а? ну ладно':'Э, тут очередь!',1.4); pop('ВЛЕЗ!',h.x,h.y-52,'#ffb84a',8); }
     else { tev('cut_fail'); TR.scandal+=30; z.cutBan=3; h.x-=24; h.stun=.9; bubble(e,'ВЫ ТУТ НЕ СТОЯЛИ!',1.8,P.red); shake(2); SFX.hurt(); haptic('error'); if(TR.scandal>=100){ TR.scandal=40; TR.scandals++; h.stun=2.2; say('СКАНДАЛ! Вся очередь против тебя',2,P.red); } } },
   prog(z){ const h=G.hero; if(z.passed||h.passing) return 2000+h.x; let p=h.x*.5; if(z.inQ) p+=300-z.inQ.q.indexOf(h)*20+z.adv*6; if(z.inK>0) p+=200-z.K.indexOf(h)*20; if(z.need) p+=0; return p; },
-  unstick(z){ const h=G.hero; if(z.inQ){ const j=z.inQ.q.indexOf(h); z.inQ.q.splice(j,1); z.inQ.q.unshift(h); z.inQ.gT=0; z.green=true; z.tbT=0; }
+  unstick(z){ const h=G.hero; if(z.inQ){ const j=z.inQ.q.indexOf(h); z.inQ.q.splice(j,1); z.inQ.q.unshift(h); z.inQ.gT=0; z.green=true; z.tbT=0; h.stun=0; h.x=this.slotX(z,0); h.y=z.inQ.y; for(const e of z.npcs) if(Math.abs(e.x-h.x)<14&&Math.abs(e.y-h.y)<8){ e.x-=18; } }
     else if(z.need&&!canPass()){ tev('wd_token'); wallet().tokens++; z.need=false; say('Кассир крикнул: «Держи жетон, потом занесёшь!»',2,'#ccc'); }
     else if(z.passed){ h.x=Math.min(z.len-20,h.x+40); } else { const l=z.L[0]; l.q.unshift(h); z.inQ=l; l.gT=0; } },
   bot(z){ const h=G.hero, r={x:h.x,y:h.y};
@@ -93,7 +93,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
     if(z.botCut===undefined) z.botCut=Math.random()<.5; const n=this.near(z); if(z.botCut&&n&&n.j>0&&n.e.zev&&z.cutBan<=0){ r.b=1; return r; }
     const l=z.L.reduce((a,b)=>a.q.reduce((s,e)=>s+(e.pass||1),0)<=b.q.reduce((s,e)=>s+(e.pass||1),0)?a:b); z.botL=z.botL||l; const L=z.botL; r.x=this.slotX(z,L.q.length); r.y=L.y; return r; },
   draw(z){ const lc=LINE_COL[TR.line%10]; hallBG(z,{wall:'#e2d6b8'}); const c=G.cam, wb=FY0-4;
-    wallSign(z.len/2-40,44,80,14,'ВХОД',lc,'#fff',9); wallSign(30,44,96,16,'ПРОЕЗД: жетон / проездной','#2a2236','#ffd23f',6);
+    wallSign(z.len/2-40,44,80,14,'ВХОД',lc,'#fff',9);
     // касса — окошко в стене
     if(z.K){ const kx=Math.round(z.KX-c); ctx.fillStyle=P.ink; ctx.fillRect(kx-20,wb-60,40,52); ctx.fillStyle='#8a6a4a'; ctx.fillRect(kx-19,wb-59,38,50); ctx.fillStyle='#bfe0ff'; ctx.fillRect(kx-14,wb-50,28,22); ctx.fillStyle='#ffd0a8'; ctx.fillRect(kx-5,wb-44,10,10); ctx.fillStyle='#c84a8a'; ctx.fillRect(kx-6,wb-46,12,4); ctx.fillStyle=P.ink; ctx.fillRect(kx-3,wb-40,2,1); ctx.fillRect(kx+1,wb-40,2,1); ctx.fillStyle='#5a3a2a'; ctx.fillRect(kx-16,wb-26,32,6);
       G.labels.push(['КАССА',kx,wb-66,7,P.edge]); if(z.need&&!canPass()) goalArrow(this.kslotX(z,z.K.length),z.y0-50,P.edge); }

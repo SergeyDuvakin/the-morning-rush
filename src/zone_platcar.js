@@ -77,13 +77,13 @@ ZONES.car={ title:z=>z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controll
     G.hero.x=z.doorsX[0]; G.hero.y=z.y0+14; },
   update(z,dt){ const h=G.hero, L=z.len; if(!z.arrive) z.T+=dt;
     // качка
-    z.swT-=dt; if(z.swT<1&&!z.warn){ z.warn=1; say(pick(['ТОРМОЖЕНИЕ!','ДЕРЖИСЬ!','ПОВОРОТ!']),1,P.edge); } if(z.swT<=0){ z.swT=z.sway+rnd(-.6,.8); z.warn=0; const dir=Math.random()<.5?-1:1; shake(3); SFX.land();
+    z.swT-=dt; if(z.swT<1.6&&!z.warn){ z.warn=1; z.warnS=pick(['ТОРМОЖЕНИЕ','ПОВОРОТ','РЫВОК']); SFX.squeak(); } if(z.swT<=0){ z.swT=z.sway+rnd(-.6,.8); z.warn=0; const dir=Math.random()<.5?-1:1; shake(3); SFX.land();
       for(const e of z.npcs){ if(!e.sit&&!e.ctl) e.x+=dir*rnd(8,18); }
       if(!h.seat&&!h.hold&&!z.arrive){ tev('sway_hit'); h.x+=dir*24; h.stun=.5; TR.nerves=Math.max(0,TR.nerves-6); pop('ШАТНУЛО!',h.x,h.y-50,'#ff9a3a',8); } }
     // остановки: кто-то выходит — место свободно
     if(z.si<z.stopAt.length&&z.T>=z.stopAt[z.si]){ z.si++; z.stopT=3.2; tev('stop'); SFX.doors(); say('Остановка. Кто-то встаёт!',1.4,P.neonLime);
       const occ=z.slots.filter(s=>s.occ&&s.occ!=='hero'); for(let i=0;i<Math.min(occ.length,ri(1,2));i++){ const s=pick(occ); const e=s.occ; if(!e||e==='hero') continue; s.occ=null; s.fresh=2; e.sit=null; e.pin=false; e.st='walk'; e.leaving=pick(z.doorsX); }
-      for(let i=0;i<ri(1,3);i++){ const e=mkNpc(pick(['granny','polite','aunt','student']),pick(z.doorsX),z.y0+8); e.seek=1.2+Math.random()*1.4; z.npcs.push(e); } }
+      for(let i=0;i<ri(1,3);i++){ const e=mkNpc(pick(['granny','polite','aunt','student']),pick(z.doorsX),z.y0+8); e.seek=Math.max(1,3.2-z.d*.1)+Math.random()*1.4; e.sspd=24+Math.min(24,z.d*1.2); z.npcs.push(e); } }
     if(z.stopT>0) z.stopT-=dt;
     for(const s of z.slots) if(s.fresh>0) s.fresh-=dt;
     for(const e of z.npcs){ if(e.sit){ e.x=e.sit.x; e.y=z.y0; e.set('sleep'); continue; }
@@ -91,7 +91,7 @@ ZONES.car={ title:z=>z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controll
       if(e.ctl){ walkTo(e,-20,e.y,34,dt); e.set('walk'); for(const o of z.npcs){ if(o!==e&&!o.sit&&Math.abs(o.x-e.x)<14&&Math.abs(o.y-e.y)<10){ o.y+=o.y>e.y?14:-14; o.x-=10; if(Math.random()<.2) bubble(o,'АЙ!',.6); } }
         if(!h.seat&&Math.abs(h.x-e.x)<14&&Math.abs(h.y-e.y)<10&&!h.stun){ tev('ctl_hit'); h.stun=1.1; h.x-=26; bubble(e,'ВАШ БИЛЕТИК!',1.4,P.red); shake(3); SFX.heavy(); TR.nerves=Math.max(0,TR.nerves-10); }
         if(e.x<-10){ e.x=L+40; } continue; }
-      if(e.seek!==undefined){ e.seek-=dt; if(e.seek<=0){ const f=z.slots.filter(s=>!s.occ).sort((a,b)=>Math.abs(a.x-e.x)-Math.abs(b.x-e.x))[0]; if(f){ if(walkTo(e,f.x,z.y0,40,dt)&&!f.occ){ f.occ=e; e.sit=f; e.pin=true; e.seek=undefined; if(f.near) pop('ОПЕРЕДИЛИ!',f.x,z.y0-50,P.red,8); } } else e.seek=undefined; } continue; }
+      if(e.seek!==undefined){ e.seek-=dt; if(e.seek<=0){ const f=z.slots.filter(s=>!s.occ).sort((a,b)=>Math.abs(a.x-e.x)-Math.abs(b.x-e.x))[0]; if(f){ if(walkTo(e,f.x,z.y0,e.sspd||40,dt)&&!f.occ){ f.occ=e; e.sit=f; e.pin=true; e.seek=undefined; if(f.near) pop('ОПЕРЕДИЛИ!',f.x,z.y0-50,P.red,8); } } else e.seek=undefined; } continue; }
       if(e.hx!==undefined) walkTo(e,e.hx,e.hy,14,dt); }
     z.npcs=z.npcs.filter(e=>!e.gone);
     // герой: сидит/держится
@@ -131,11 +131,11 @@ ZONES.car={ title:z=>z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controll
     if(z.gangway){ const sx=Math.round(z.len-14-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-4,FY0-76,18,74); ctx.fillStyle='#6a5a7a'; ctx.fillRect(sx-3,FY0-75,16,72); G.labels.push(['ТАМБУР',sx+4,FY0-82,6,'#c9f']); }
     // сиденья
     for(let bx=24;bx+66<z.len-24;bx+=100){ const sx=Math.round(bx-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-1,FY0-26,68,22); ctx.fillStyle=shade(lc,-.2); ctx.fillRect(sx,FY0-25,66,12); ctx.fillStyle=shade(lc,-.45); ctx.fillRect(sx,FY0-13,66,8); }
-    for(const s of z.slots) if(!s.occ){ const sx=Math.round(s.x-c); ctx.fillStyle=Math.floor(G.t*6)%2?P.neonLime:'#fff'; ctx.fillRect(sx-8,FY0-25,16,2); G.labels.push(['СВОБОДНО',sx,FY0-32,6,P.neonLime]); }
+    for(const s of z.slots) if(!s.occ){ const sx=Math.round(s.x-c), on=Math.floor(G.t*4)%2; ctx.fillStyle=P.ink; ctx.fillRect(sx-11,FY0-28,22,17); ctx.fillStyle=on?P.neonLime:'#7aff9a'; ctx.fillRect(sx-10,FY0-27,20,15); G.labels.push(['МЕСТО',sx,FY0-36,8,P.neonLime]); goalArrow(s.x,FY0-44,P.neonLime); }
     ctx.fillStyle='#7a6a5a'; ctx.fillRect(0,FY0,W,H-FY0); persFloor(c,'#5a4a3a',30); floorAO();
-    for(const p of z.poles){ const sx=Math.round(p-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-1,0,4,FY1); ctx.fillStyle='#d8d8e8'; ctx.fillRect(sx,0,2,FY1); }
+    for(const p of z.poles){ const sx=Math.round(p-c), hi=!G.hero.seat&&G.hero.hold==null&&Math.abs(p-G.hero.x)<60; ctx.fillStyle=P.ink; ctx.fillRect(sx-1,0,4,FY1); ctx.fillStyle=hi?(Math.floor(G.t*4)%2?'#9cf':'#fff'):'#d8d8e8'; ctx.fillRect(sx,0,2,FY1); if(hi) G.labels.push(['ПОРУЧЕНЬ',sx,FY0+4,6,'#9cf']); }
     ctx.fillStyle=P.ink; ctx.fillRect(0,12,W,2); ctx.fillStyle='#d8d8e8'; ctx.fillRect(0,12,W,1);
     drawTripActors([G.hero,...z.npcs]);
     if(z.terminal&&G.hero.seat&&z.sleep>.2){ ctx.fillStyle='rgba(10,6,30,'+(z.sleep*.6)+')'; ctx.fillRect(0,0,W,H); G.labels.push(['Z z z',Math.round(G.hero.x-c)+14,G.hero.y-60,8,'#9cf']); }
-    if(z.swT<1&&!z.arrive) G.labels.push(['! ДЕРЖИСЬ !',W/2,60,10,P.edge]);
+    if(z.swT<1.6&&!z.arrive){ const bl=Math.floor(G.t*6)%2, cx=Math.round(W/2), cy=58; ctx.fillStyle=P.ink; ctx.beginPath(); ctx.moveTo(cx,cy-16); ctx.lineTo(cx+18,cy+14); ctx.lineTo(cx-18,cy+14); ctx.fill(); ctx.fillStyle=bl?'#ffd23f':'#ff8a1f'; ctx.beginPath(); ctx.moveTo(cx,cy-12); ctx.lineTo(cx+14,cy+12); ctx.lineTo(cx-14,cy+12); ctx.fill(); G.labels.push(['!',cx,cy+3,12,P.ink,'center',null]); G.labels.push([(z.warnS||'ТОРМОЖЕНИЕ')+' — ДЕРЖИСЬ',cx,cy+26,9,'#ffd23f']); }
   } };

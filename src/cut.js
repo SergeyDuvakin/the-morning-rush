@@ -11,7 +11,7 @@ function cutUpdate(dt){ let sp=1; for(const ev of input.events){ if(ev.t==='tap'
   CUT.t+=dt*sp; if(CUT.t>=CUT.len) endCut(); }
 function drawCut(){ G.labels=[]; buttons=[]; const c=CUT; const id=c.id.startsWith('boss_')?'boss':c.id; CUTS[id].draw(c.t,c);
   // кнопка «Пропустить»
-  if(c.t>.5){ const b=Math.max(26,44*DPR/SC); const x=W-SA.r-b*2.6-4, y=SA.t+4; ctx.fillStyle='#000a'; ctx.fillRect(x,y,b*2.6,b); G.labels.push(['Пропустить ⏭',x+b*1.3,y+b/2,8,'#fff']); buttons.push({x,y,w:b*2.6,h:b,id:'skip',cb:()=>{ SFX.ui(); endCut(); }}); }
+  if(c.t>.5){ const b=Math.max(26,44*DPR/SC); const x=W-SA.r-b*2.6-4, y=SA.t+4; ctx.fillStyle='#000a'; ctx.fillRect(x,y,b*2.6,b); G.labels.push(['ПРОПУСТИТЬ ›',x+b*1.3,y+b/2,8,'#fff']); buttons.push({x,y,w:b*2.6,h:b,id:'skip',cb:()=>{ SFX.ui(); endCut(); }}); }
   // киношные полосы
   ctx.fillStyle='#000'; ctx.fillRect(0,0,W,Math.max(4,SA.t)); ctx.fillRect(0,H-6,W,6); }
 const spr=(spec,pose,fr,mood,x,y,flip,sc=1,rot=0)=>{ const img=personSprite(spec,pose,fr,mood,Math.floor(G.t*10)); ctx.save(); ctx.translate(Math.round(x),Math.round(y)); if(flip) ctx.scale(-1,1); if(rot) ctx.rotate(rot); ctx.drawImage(img,Math.round(-32*sc),Math.round(-60*sc),Math.round(64*sc),Math.round(64*sc)); ctx.restore(); };

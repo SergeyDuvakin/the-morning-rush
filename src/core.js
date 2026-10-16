@@ -90,7 +90,7 @@ const toIn=(cx,cy)=>[cx*DPR/SC, cy*DPR/SC];
 const gest={}; // pointerId -> {x0,y0,t0,done}
 window.addEventListener('pointerdown',e=>{ e.preventDefault(); audioInit(); const [x,y]=toIn(e.clientX,e.clientY);
   for(let i=buttons.length-1;i>=0;i--){ const b=buttons[i]; const pad=2; if(x>=b.x-pad&&x<=b.x+b.w+pad&&y>=b.y-pad&&y<=b.y+b.h+pad){ b.cb&&b.cb(); input.events.push({t:'btn',id:b.id}); return; } }
-  if(window.wantsStick&&window.wantsStick()&&x<W*0.45&&!input.stick){ input.stick={id:e.pointerId,x0:x,y0:y,x,y}; return; }
+  if(window.wantsStick&&window.wantsStick()&&x<W*0.45&&!input.stick){ const B=window.STICK_BASE&&window.STICK_BASE(); input.stick=B?{id:e.pointerId,x0:B.x,y0:B.y,x,y,fixed:B.r}:{id:e.pointerId,x0:x,y0:y,x,y}; return; }
   gest[e.pointerId]={x0:x,y0:y,x,y,t0:performance.now(),done:false};
   input.events.push({t:'down',x,y});
 },{passive:false});
@@ -111,9 +111,9 @@ window.addEventListener('keyup',e=>{ input.keys[e.code]=false; if(e.code==='KeyJ
 window.addEventListener('contextmenu',e=>e.preventDefault());
 function stickVec(){ if(window.__botStick) return window.__botStick; let x=0,y=0; const k=input.keys;
   if(k.ArrowLeft||k.KeyA)x-=1; if(k.ArrowRight||k.KeyD)x+=1; if(k.ArrowUp||k.KeyW)y-=1; if(k.ArrowDown||k.KeyS)y+=1;
-  if(input.stick){ const s=input.stick; let dx=s.x-s.x0, dy=s.y-s.y0; const R=18; const l=Math.hypot(dx,dy);
-    if(l>R){ s.x0+= (dx/l)*(l-R); s.y0+=(dy/l)*(l-R); dx=s.x-s.x0; dy=s.y-s.y0; } // стик «едет» за пальцем
-    if(l>2){ x=dx/R; y=dy/R; } }
+  if(input.stick){ const s=input.stick; let dx=s.x-s.x0, dy=s.y-s.y0; const R=s.fixed||18; const l=Math.hypot(dx,dy);
+    if(l>R&&!s.fixed){ s.x0+= (dx/l)*(l-R); s.y0+=(dy/l)*(l-R); dx=s.x-s.x0; dy=s.y-s.y0; } // стик «едет» за пальцем
+    if(l>(s.fixed?4:2)){ x=dx/R; y=dy/R; } }
   const l=Math.hypot(x,y); if(l>1){x/=l;y/=l;} return {x,y}; }
 
 // ---------- звук: маленький чиптюн-синт ----------
