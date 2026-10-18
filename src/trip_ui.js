@@ -5,35 +5,44 @@ CUTS.tripwin={len:4,start:c=>{ c.g=ri(0,3); },draw:(t,c)=>{ ctx.fillStyle='#8ac8
   for(let i=0;i<8;i++){ const x=i*W/7-20, hh=40+(i*37)%60; ctx.fillStyle=i%2?'#7a7a9a':'#8a8aa8'; ctx.fillRect(x,H*.72-hh,W/8,hh); }
   const ox=W*.72; ctx.fillStyle=P.ink; ctx.fillRect(ox-2,H*.18-2,W*.22+4,H*.56); ctx.fillStyle='#c8c0d8'; ctx.fillRect(ox,H*.18,W*.22,H*.54); ctx.fillStyle='#ffe9a8'; for(let y=H*.22;y<H*.66;y+=14) for(let x=ox+6;x<ox+W*.2;x+=14) ctx.fillRect(Math.round(x),Math.round(y),8,8);
   G.labels.push(['ОФИС',ox+W*.11,H*.15,9,P.ink,'center','#fff']); ctx.fillStyle='#6a6070'; ctx.fillRect(0,H*.72,W,H*.28);
-  const k=Math.min(1,t/2.6); spr(HERO_SPECS[heroId],k<1?'walk':'cheer',Math.floor(t*12)%(k<1?8:4),'norm',W*.08+k*(W*.62),H*.9,false,1.2);
+  const k=Math.min(1,t/2.6); spr(heroSpec(heroId),k<1?'walk':'cheer',Math.floor(t*12)%(k<1?8:4),'norm',W*.08+k*(W*.62),H*.9,false,1.2);
   const mm=Math.max(0,59-Math.ceil(TR.tLeft/TR.tTotal*20)); G.labels.push(['УСПЕЛ! 08:'+String(mm).padStart(2,'0'),W/2,H*.12,16*ease(t*2),P.edge]);
   sub(['Начальник даже не заметил. Обидно.','Пропуск пикнул с первого раза. Праздник.','Кофе в офисе бесплатный. Почти.','Коллеги: «Ты чего такой помятый?»'][c.g]); }};
 CUTS.late={len:3.5,start:c=>{ SFX.alarm(); },draw:(t,c)=>{ ctx.fillStyle='#2a1020'; ctx.fillRect(0,0,W,H); const cx=W/2, cy=H*.42; disc(ctx,cx,cy,44,44,P.ink); disc(ctx,cx,cy,40,40,'#fff8e8');
   ctx.strokeStyle=P.ink; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx,cy-30); ctx.moveTo(cx,cy); ctx.lineTo(cx-20,cy); ctx.stroke(); if(Math.floor(t*8)%2) G.labels.push(['ДЗЫНЬ!',cx+60,cy-30,12,P.edge]);
   G.labels.push(['09:00 — ОПОЗДАЛ',W/2,H*.12,15,'#ff6a6a']); sub('Начальник смотрит на часы. Потом на тебя. Потом снова на часы.'); }};
 CUTS.depot={len:4,start:c=>{ SFX.ko(); },draw:(t,c)=>{ ctx.fillStyle='#14101c'; ctx.fillRect(0,0,W,H); for(let i=0;i<3;i++){ const y=H*.3+i*34; ctx.fillStyle='#3a4a5a'; ctx.fillRect(-20+i*30-t*10,y,W*.8,24); ctx.fillStyle='#ffe9a830'; for(let x=0;x<W*.8;x+=24) ctx.fillRect(-14+i*30-t*10+x,y+4,14,8); }
-  spr(HERO_SPECS[heroId],'sit',0,'ko',W*.5,H*.86,false,1.2); G.labels.push(['Z z z',W*.5+24,H*.6,10,'#9cf']); G.labels.push(['УЕХАЛ В ДЕПО',W/2,H*.12,15,'#9cf']); sub('Проснулся от тишины. Механик: «Ты кто?»'); }};
-CUTS.escwin={len:2.5,draw:(t,c)=>{ ctx.fillStyle='#1d3a2a'; ctx.fillRect(0,0,W,H); spr(HERO_SPECS[heroId],'cheer',Math.floor(t*10)%4,'norm',W/2,H*.8,false,1.4); G.labels.push(['ВЫРВАЛСЯ! '+TR.escT.toFixed(1)+' с',W/2,H*.2,15,P.neonLime]); }};
-CUTS.esclose={len:2.5,draw:(t,c)=>{ ctx.fillStyle='#2a1020'; ctx.fillRect(0,0,W,H); spr(HERO_SPECS[heroId],'hurt',0,'hurt',W/2,H*.8,false,1.4); G.labels.push(['ДВЕРИ ЗАКРЫЛИСЬ…',W/2,H*.2,15,'#ff6a6a']); sub('Едешь дальше. Зато тепло.'); }};
+  spr(heroSpec(heroId),'sit',0,'ko',W*.5,H*.86,false,1.2); G.labels.push(['Z z z',W*.5+24,H*.6,10,'#9cf']); G.labels.push(['УЕХАЛ В ДЕПО',W/2,H*.12,15,'#9cf']); sub('Проснулся от тишины. Механик: «Ты кто?»'); }};
+CUTS.escwin={len:2.5,draw:(t,c)=>{ ctx.fillStyle='#1d3a2a'; ctx.fillRect(0,0,W,H); spr(heroSpec(heroId),'cheer',Math.floor(t*10)%4,'norm',W/2,H*.8,false,1.4); G.labels.push(['ВЫРВАЛСЯ! '+TR.escT.toFixed(1)+' с',W/2,H*.2,15,P.neonLime]); }};
+CUTS.esclose={len:2.5,draw:(t,c)=>{ ctx.fillStyle='#2a1020'; ctx.fillRect(0,0,W,H); spr(heroSpec(heroId),'hurt',0,'hurt',W/2,H*.8,false,1.4); G.labels.push(['ДВЕРИ ЗАКРЫЛИСЬ…',W/2,H*.2,15,'#ff6a6a']); sub('Едешь дальше. Зато тепло.'); }};
 // финал из tripUpdate → катсцена → результат
 const _tripUpd=tripUpdate;
 // ---------- результат ----------
+// кнопка-иконка «карта» (сложенная карта, без подписи)
+function mapIconBtn(x,y,s,cb,id){ ctx.fillStyle=P.ink; ctx.fillRect(x-2,y-2,s+4,s+4); ctx.fillStyle='#8a3ad8'; ctx.fillRect(x,y,s,s-3); ctx.fillStyle=shade('#8a3ad8',-.35); ctx.fillRect(x,y+s-3,s,3);
+  const k=Math.max(1,Math.floor(s/14)), w=10*k, h=8*k, ix=Math.round(x+s/2-w/2), iy=Math.round(y+s/2-h/2-1); ctx.fillStyle='#f1e8d4'; ctx.fillRect(ix,iy,w,h); ctx.fillStyle='#c9bb9a'; ctx.fillRect(ix+Math.round(w/3),iy,k,h); ctx.fillRect(ix+Math.round(2*w/3),iy,k,h); ctx.fillStyle='#e8354a'; ctx.fillRect(ix+2*k,iy+2*k,2*k,2*k); ctx.fillStyle='#2aa860'; ctx.fillRect(ix+w-4*k,iy+h-4*k,2*k,2*k);
+  buttons.push({x,y,w:s,h:s,id,icon:1,cb:()=>{SFX.ui(); haptic('select'); cb();}}); }
 drawResult=function(){ G.labels=[]; buttons=[]; ctx.fillStyle='#2a1d33'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#3a2a48'; for(let x=0;x<W;x+=24) ctx.fillRect(x,0,12,H);
   const w=TR.win, T=SA.t, bh=Math.max(28,48*DPR/SC), by=H-SA.b-bh-8, bw=Math.min(130,(W-SA.l-SA.r-40)/3);
   if(TR.mode==='escape'){ G.labels.push([w?'ВЫРВАЛСЯ за '+TR.escT.toFixed(1)+' с':'Не успел выйти',W/2,T+24,13,w?P.neonLime:'#ff8a8a']);
     G.labels.push(['Рекорд: '+(save.escBest?save.escBest.toFixed(1)+' с':'—')+(w&&TR.escNew?'  · НОВЫЙ!':''),W/2,T+50,9,P.edge]); if(w) G.labels.push(['+2 монеты',W/2,T+66,8,'#ffd23f']);
     bigBtn('МЕНЮ',W/2-bw-6,by,bw,bh,'#8a3ad8',()=>toTitle(),'rmenu'); bigBtn('ЕЩЁ РАЗ',W/2+6,by,bw,bh,'#3a6ad8',()=>startEscape(),'retry'); return; }
-  G.labels.push([w?'«'+TR.name+'» — УСПЕЛ!':TR.reason==='depot'?'Уехал в депо':'Опоздал на работу',W/2,T+16,12,w?P.edge:'#ff8a8a']);
+  G.labels.push([w&&TR.wk?(TR.wk.sun?'ВОСКРЕСЕНЬЕ':'СУББОТА')+' — ВЫХОДНОЙ!':w?'«'+TR.name+'» — УСПЕЛ!':TR.reason==='depot'?'Уехал в депо':'Опоздал на работу',W/2,T+16,12,w?P.edge:'#ff8a8a']);
   if(w){ for(let i=0;i<3;i++){ const on=i<TR.stars, x=W/2+(i-1)*30, y=T+40; G.labels.push(['★',x,y,20,on?P.edge:'#5a4a6a']); }
     G.labels.push(['★ успел · ★ запас 20% времени · ★ запас + место у поручня/в углу/сидя',W/2,T+60,6,'#bbb']); }
-  const rows=w?[['Очки',TR.score],['Запас',Math.round(TR.tLeft)+' с'],['В вагоне',TR.spotName],['Вежливость',TR.polite],['Скандалы',TR.scandals],['Монеты','+'+TR.coinsGot]]:[['Где застрял',ZONES[TR.z.k].title(TR.z)],['Скандалы',TR.scandals]];
+  const rows=w?(typeof dayStats5==='function'?dayStats5():[['Очки',TR.score],['Запас',Math.round(TR.tLeft)+' с'],['В вагоне',TR.spotName],['Вежливость',TR.polite],['Скандалы',TR.scandals],['Монеты','+'+TR.coinsGot]]):[['Где застрял',ZONES[TR.z.k].title(TR.z)],['Скандалы',TR.scandals]];
   const cx=W/2, ry=T+(w?74:44), two=rows.length>2; rows.forEach((r,i)=>{ const col=two?i%2:0, row=two?i>>1:i, x=two?cx+(col?70:-70):cx; G.labels.push([r[0]+':',x-4,ry+row*12,7,'#ccc','right']); G.labels.push([String(r[1]),x+2,ry+row*12,7,'#fff','left']); });
   const pts=tripPts(); G.labels.push(['Кошелёк: '+wallet().coins+' мон. · '+passInfo()+'   ·   Очки всего: '+pts+(w&&TR.ptsGain?' (+'+TR.ptsGain+')':''),W/2,ry+(two?Math.ceil(rows.length/2):rows.length)*12+4,7,'#ffd23f']);
   const nu=[...(TR.newSt||[]).map(s=>'станция «'+s+'»'),...(TR.newUnlocks||[])]; if(w&&nu.length) G.labels.push(['ОТКРЫТО: '+nu.slice(0,3).join(', ')+(nu.length>3?'…':''),W/2,ry+(two?Math.ceil(rows.length/2):rows.length)*12+18,7,P.neonLime]);
   else { const n=ST_THR.findIndex(t=>t>pts); if(n>0) G.labels.push(['до станции «'+LEVELS[n].name+'»: ещё '+(ST_THR[n]-pts)+' очк.',W/2,ry+(two?Math.ceil(rows.length/2):rows.length)*12+18,7,'#ccc']); }
-  bigBtn('КАРТА',W/2-bw*1.5-10,by,bw,bh,'#8a3ad8',()=>{ mapLine=TR.line; toMap(); },'rmap');
-  bigBtn('ЕЩЁ РАЗ',W/2-bw/2,by,bw,bh,'#3a6ad8',()=>startTrip(TR.idx),'retry');
-  const nx=TR.idx+1; if(nx<LEVELS.length&&lvOpen(Math.floor(nx/8),nx%8)) bigBtn('ДАЛЬШЕ ▶',W/2+bw/2+10,by,bw,bh,'#2aa860',()=>{ const L=LEVELS[nx]; if(L.i===0&&!save.cut['line'+L.w]){ save.cut['line'+L.w]=1; store(); startCut('line',()=>startTrip(nx),L.w); } else startTrip(nx); },'next');
+  // M1-6: «ЕЩЁ РАЗ» — тот же сид дня, «НОВЫЙ ДЕНЬ»/«ДАЛЬШЕ ▶» — новый сид. Карта — иконка без подписи (≤2 подписанные кнопки)
+  if(TR.day){ const d=TR.day, tk=TR.task; G.labels.push([WD4[d.weekday]+' · '+DAYTYPE4[d.type].n+(tk?' · задание: '+tk.n+(w?(TR.taskOk?' ✔ +'+(TR.taskCoins||TASK_COINS)+' мон.':' ✘'):''):''),W/2,by-10,7,w&&TR.taskOk?P.neonLime:'#cfc6e0']); }
+  const bw2=Math.min(150,(W-SA.l-SA.r-bh-60)/2), x0=W/2-bw2-6+bh/2+4;
+  mapIconBtn(x0-bh-12,by,bh,()=>{ mapLine=TR.line; toMap(); },'rmap');
+  bigBtn('ЕЩЁ РАЗ',x0,by,bw2,bh,'#3a6ad8',()=>{ if(TR.day) startDay(TR.idx,{day:TR.day}); else startTrip(TR.idx); },'retry');
+  const nx=TR.idx+1, nOpen=w&&nx<LEVELS.length&&lvOpen(Math.floor(nx/8),nx%8), go=i=>()=>{ if(TR.day||!TR.mode||TR.mode==='trip') newDay(); const L=LEVELS[i]; if(L.i===0&&L.w>0&&!save.cut['line'+L.w]){ save.cut['line'+L.w]=1; store(); startCut('line',()=>startDay(i),L.w); } else startDay(i); };
+  if(nOpen) bigBtn('ДАЛЬШЕ ▶',x0+bw2+12,by,bw2,bh,'#2aa860',go(nx),'next');
+  else bigBtn(w?'НОВЫЙ ДЕНЬ ▶':'НОВЫЙ ДЕНЬ',x0+bw2+12,by,bw2,bh,'#2aa860',go(TR.idx),'newday');
 };
 // ---------- карта: станции по очкам + кривая открытий ----------
 function stationLocs(idx){ const z=stationTrip(idx); const s=new Set(); for(const q of z){ if(q.k==='gate'){ s.add('турникеты'); if(q.vend) s.add('автомат кофе'); if(q.detector) s.add('рамка'); if(q.turnboss) s.add('турникет-мутант'); }
@@ -81,5 +90,5 @@ window.onBack=()=>{ if(G.scene==='trip'){ paused=!paused; } else if(G.scene==='m
 const _update=update; update=function(dt){ if(G.scene!=='trip') return _update(dt); G.t+=dt; musicTick(); input.events=input.events||[]; if(portrait){ input.events.length=0; return; } tripUpdate(dt); input.events.length=0; };
 const _render=render; render=function(){ if(G.scene!=='trip'||portrait) return _render();
   clearText(); ctx.setTransform(1,0,0,1,0,0); ctx.imageSmoothingEnabled=false; floorBand(); drawTrip();
-  for(const l of G.labels){ const o=(l[6]===undefined||l[6]===0)?'#1a1020':l[6]; txt(l[0],l[1],l[2],l[3],l[4],l[5]||'center',o,900,l[7]); } };
+  for(const l of G.labels){ if(l[8]!==undefined&&typeof labOcc==='function'&&labOcc(l)) continue; const o=(l[6]===undefined||l[6]===0)?'#1a1020':l[6]; txt(l[0],l[1],l[2],l[3],l[4],l[5]||'center',o,900,l[7]); } };
 startLevel=function(idx){ if(TR.mode==='escape'&&G.scene==='trip') return startEscape(); startTrip(idx); };

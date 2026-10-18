@@ -19,7 +19,7 @@ const ease=t=>t<0?0:t>1?1:t*t*(3-2*t);
 function sub(s,col='#fff'){ G.labels.push([s,W/2,H-SA.b-22,10,col]); }
 function room(dark){ ctx.fillStyle=dark?'#1a1530':'#3a3058'; ctx.fillRect(0,0,W,H); ctx.fillStyle=dark?'#241d40':'#4a3d70'; for(let x=0;x<W;x+=24) ctx.fillRect(x,0,12,H*.7); ctx.fillStyle='#2a2238'; ctx.fillRect(0,H*.7,W,H*.3); ctx.fillStyle='#1a1424'; for(let x=0;x<W;x+=20) ctx.fillRect(x,H*.7,1,H*.3); }
 const CUTS={
-  intro:{len:13,draw:(t)=>{ const S=HERO_SPECS.serega; room(t<4); const bx=W*.62, by=H*.7;
+  intro:{len:13,draw:(t)=>{ const S=heroSpec('serega'); room(t<4); const bx=W*.62, by=H*.7;
     // кровать
     ctx.fillStyle=P.ink; ctx.fillRect(W*.2-2,by-22,W*.36+4,26); ctx.fillStyle='#e8e0f0'; ctx.fillRect(W*.2,by-20,W*.36,20); ctx.fillStyle='#7a5ad8'; ctx.fillRect(W*.28,by-20,W*.28,14);
     // тумбочка + будильник
@@ -38,7 +38,7 @@ const CUTS={
       G.labels.push(['ДАВКА',W/2-50,H*.3,24*ease(k*2),P.edge]); G.labels.push(['ДО РАБОТЫ',W/2+52,H*.3+4,18*ease(k*2-.2),P.neonPink]); }
     drawParts(); G.parts.forEach(p=>{}); updFX(1/60);
   }},
-  metro:{len:8,draw:(t)=>{ const S=HERO_SPECS.serega; ctx.fillStyle='#efe2c8'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#c9b48e'; for(let y=6;y<H*.72;y+=8) ctx.fillRect(0,y,W,1); ctx.fillStyle='#6c6274'; ctx.fillRect(0,H*.72,W,H*.28);
+  metro:{len:8,draw:(t)=>{ const S=heroSpec('serega'); ctx.fillStyle='#efe2c8'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#c9b48e'; for(let y=6;y<H*.72;y+=8) ctx.fillRect(0,y,W,1); ctx.fillStyle='#6c6274'; ctx.fillRect(0,H*.72,W,H*.28);
     const tx=W*.55, ty=H*.86; ctx.fillStyle=P.ink; ctx.fillRect(tx-10,ty-40,20,40); ctx.fillStyle='#9aa0b0'; ctx.fillRect(tx-9,ty-39,18,38); ctx.fillStyle=P.ink; ctx.fillRect(tx-6,ty-34,12,6);
     const ok=t>4.2; ctx.fillStyle=ok?P.neonLime:P.red; ctx.fillRect(tx-5,ty-33,10,4); const arm=ok?-1:0; ctx.fillStyle='#c0c6d0'; ctx.fillRect(tx+9,ty-26+arm*10,26,4);
     const hx=t<2.2?W*.1+t*W*.17:t<4.8?tx-24:tx-24+(t-4.8)*70; spr(S,t<2.2||t>4.8?'walk':t<3.6?'grab':'idle',Math.floor(t*10)%8,t>3.6&&t<4.2?'o':'norm',hx,ty,false,1.1);
@@ -57,7 +57,7 @@ const CUTS={
     ctx.fillStyle=shade(LINE_COL[w-1],.5); ctx.fillRect(0,0,W*(1-k),H*.7); ctx.fillStyle=shade(lc,.5); ctx.fillRect(W*(1-k),0,W*k,H*.7); ctx.fillStyle='#6c6274'; ctx.fillRect(0,H*.7,W,H*.3);
     ctx.fillStyle=P.ink; ctx.fillRect(W*.25,H*.12,W*.5,22); ctx.fillStyle=lc; ctx.fillRect(W*.25+2,H*.12+2,W*.5-4,18); G.labels.push(['Переход на '+LINE_NAMES[w]+' ветку →',W/2,H*.12+11,9,'#fff']);
     const gag=[null,'мозаика-торт подмигивает','за окном метель… в метро?'][w]; if(gag&&t>2) sub(gag);
-    spr(HERO_SPECS[heroId],'walk',Math.floor(t*12)%8,'norm',W*.1+k*W*.9,H*.88,false,1.1);
+    spr(heroSpec(heroId),'walk',Math.floor(t*12)%8,'norm',W*.1+k*W*.9,H*.88,false,1.1);
     if(t>3&&t<3.1) say('Следующая ветка — '+LINE_NAMES[w],2,'#fff'); }},
   win:{len:4,start:c=>{ c.g=Math.floor(Math.random()*4); },draw:(t,c)=>{ drawPlay(); G.labels.length=0; buttons=[]; ctx.fillStyle='#0004'; ctx.fillRect(0,0,W,H); const h=G.hero, sx=h.x-G.cam, sy=h.y;
     const gags=['Место освободилось. Сел. Счастье.','Двери хлопнули ровно за спиной.','Голубь принёс жетон. Уважение.','Диктор: «Выход на правую сторону». ТЫ — правая сторона.'];
@@ -65,9 +65,9 @@ const CUTS={
     G.labels.push(['СТАНЦИЯ ПРОЙДЕНА!',W/2,H*.25,16*ease(t*2),P.edge]); sub(gags[c.g]); }},
   lose:{len:4,start:c=>{ c.g=Math.floor(Math.random()*3); SFX.ko(); },draw:(t,c)=>{ drawPlay(); G.labels.length=0; buttons=[]; ctx.fillStyle='#000a'; ctx.fillRect(0,0,W,H);
     const gags=['Тебя увезли в депо. Там тепло, но далеко от офиса.','Толпа вынесла тебя на поверхность. Не той станции.','Ты уснул и уехал по кольцу. Дважды.'];
-    G.labels.push(['ОПОЗДАЛ…',W/2,H*.3,18,'#ff6a6a']); sub(gags[c.g]); spr(HERO_SPECS[heroId],'down',0,'ko',W/2,H*.62,false,1.3); G.labels.push(['ну и ладно',W/2,H*.62-30,9,'#fff']); }},
+    G.labels.push(['ОПОЗДАЛ…',W/2,H*.3,18,'#ff6a6a']); sub(gags[c.g]); spr(heroSpec(heroId),'down',0,'ko',W/2,H*.62,false,1.3); G.labels.push(['ну и ладно',W/2,H*.62-30,9,'#fff']); }},
   unlock:{len:6,draw:t=>{ ctx.fillStyle='#2a1d33'; ctx.fillRect(0,0,W,H); const k=ease(t/1.2); ctx.fillStyle='#d9d2c0'; ctx.fillRect(W/2-60,H*.2,120*k,H*.55);
-    spr(HERO_SPECS.baba,t<2?'walk':'cheer',Math.floor(t*8)%8,'norm',W/2-40+Math.min(40,t*30),H*.78,false,1.5);
+    spr(heroSpec('baba'),t<2?'walk':'cheer',Math.floor(t*8)%8,'norm',W/2-40+Math.min(40,t*30),H*.78,false,1.5);
     if(t>2){ G.labels.push(['НОВЫЙ ГЕРОЙ!',W/2,H*.15,14,P.edge]); G.labels.push(['БАБКА ЗИНАИДА',W/2,H*.86,12,P.neonPink]); sub('«Сынок, я сама пройду. Через тебя.»'); } }},
 };
 // ---------- результат ----------

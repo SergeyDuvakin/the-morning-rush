@@ -1,6 +1,9 @@
 'use strict';
 // ================= v3.1: чистое меню, минимальный HUD, фикс-джойстик, обучение, концовки =================
 // ---------- джойстик: фиксированная база слева внизу ----------
+// V33-4: экранные прямоугольники контролов (+pad) — для «мягких запретных зон» толпы и layout-тестов
+window.hudRects=(pad=0)=>{ const B=STICK_BASE(), R=W-SA.r-4, bh=Math.max(24,42*DPR/SC), bwA=Math.max(60,86*DPR/SC), byA=H-SA.b-bh-4, bwB=Math.max(bwA,(TR.z&&TR.z.ctxB?txtW(TR.z.ctxB.label,8)+14:bwA));
+  return [{id:'stick',x:B.x-B.r-2-pad,y:B.y-B.r-2-pad,w:2*B.r+4+2*pad,h:2*B.r+4+2*pad},{id:'A',x:R-bwA-2-pad,y:byA-2-pad,w:bwA+4+2*pad,h:bh+4+2*pad},{id:'B',x:R-bwB-2-pad,y:byA-bh-10-pad,w:bwB+4+2*pad,h:bh+4+2*pad}]; };
 window.STICK_BASE=()=>{ const r=Math.max(20,Math.round(34*DPR/SC)); return {x:SA.l+r+14,y:H-SA.b-r-12,r}; };
 function drawStick(){ const B=STICK_BASE(), s=input.stick; ctx.globalAlpha=s?.5:.3; disc(ctx,B.x,B.y,B.r+2,B.r+2,P.ink); disc(ctx,B.x,B.y,B.r,B.r,'#ffffff'); ctx.globalAlpha=s?.85:.55;
   let tx=B.x, ty=B.y; if(s){ const v=stickVec(); tx=B.x+v.x*B.r*.75; ty=B.y+v.y*B.r*.75; } disc(ctx,tx,ty,Math.round(B.r*.45)+1,Math.round(B.r*.45)+1,P.ink); disc(ctx,tx,ty,Math.round(B.r*.45),Math.round(B.r*.45),'#e8e0f0'); ctx.globalAlpha=1;
@@ -11,8 +14,9 @@ function goalText(z){ const h=G.hero; switch(z.k){
   case 'esc': return z.mode==='stairs'?'Поднимайся: жми ШАГ':z.lane===1?'Шагни влево и иди пешком':'Иди слева: жми ИДТИ';
   case 'passage': if(z.mus&&!z.tipped&&Math.abs(h.x-z.mus.x)<90) return 'Зеваки! Дай чаевые или обойди'; return z.flow==='headon'?'Протиснись через встречных →':'Иди по переходу →';
   case 'plat': if(z.boarded) return 'Ты внутри!'; if(z.ph==='open'||z.ph==='closing') return z.atDoor?'Жми ВОЙТИ!':'Беги к открытой двери!'; return 'Встань у двери вагона';
-  case 'car': if(z.arrive) return 'Твоя станция! Выходи к двери'; if(h.seat) return z.terminal&&z.sleep>.3?'Не усни!':'Сидишь. Жди свою станцию'; if(h.hold!=null) return 'Держишься. Ищи свободное место'; return 'Займи место (или держись за поручень)';
+  case 'car': if(z.back) return z.arrive?'ДОЕХАЛ, НАКОНЕЦ-ТО!':'Обратно одну остановку — потерпи'; if(z.over) return z.arrive?'Выходи — и на обратный поезд ←':'ПРОЕХАЛ! Выйди и садись в обратную сторону ←'; if(z.arrive) return 'Твоя станция! Выходи к двери'; if(h.seat) return z.terminal&&z.sleep>.3?'Не усни!':'Сидишь. Жди свою станцию'; if(h.hold!=null) return 'Держишься. Ищи свободное место'; return 'Займи место (или держись за поручень)';
   case 'exitz': return 'Выход в город →';
+  case 'xfer': if(z.boarded) return 'Обратно, одну остановку…'; return z.atDoor?'Жми ВОЙТИ!':'ПРОЕХАЛ! Выйди и садись в обратную сторону ←';
   case 'escape': return z.op?'ДВЕРИ ОТКРЫТЫ — ВЫХОДИ!':'Пробейся к двери';
   } return ''; }
 // ---------- минимальный HUD ----------
@@ -22,11 +26,13 @@ tripHUD=function(){ const L=SA.l+4, R=W-SA.r-4, T=SA.t+3, z=TR.z;
   const clock='08:'+String(40+Math.min(19,mins)).padStart(2,'0'); const blink=crit&&Math.floor(G.t*3)%2;
   ctx.fillStyle='#120c18c0'; ctx.fillRect(L,T,84,30); G.labels.push([clock,L+42,T+15,16,blink?'#ff4a4a':crit?'#ff8a8a':'#fff']);
   // строка цели
-  const g=G.msg?G.msg.s:goalText(z), gc=G.msg?G.msg.col:'#ffe28a'; const gw=Math.min(W-200,txtW(g,10)+20); ctx.fillStyle='#120c18c0'; ctx.fillRect(Math.round(W/2-gw/2),T,gw,22); G.labels.push([g,W/2,T+11,10,gc]);
+  const g=G.msg?G.msg.s:goalText(z), gc=G.msg?G.msg.col:'#ffe28a'; let gs=10; while(gs>7&&txtW(g,gs)+20>W-200) gs-=.5; const gw=Math.min(W-200,txtW(g,gs)+20); ctx.fillStyle='#120c18c0'; ctx.fillRect(Math.round(W/2-gw/2),T,gw,22); G.labels.push([g,W/2,T+11,gs,gc]); // длинная цель ужимается, а не лезет на часы/паузу
   // скандал — только когда растёт
-  if(TR.scandal>12){ const bw=90, bx=Math.round(W/2-bw/2), by=T+26; ctx.fillStyle=P.ink; ctx.fillRect(bx-1,by-1,bw+2,6); ctx.fillStyle=TR.scandal>70?P.red:'#ff9a3a'; ctx.fillRect(bx,by,Math.round(bw*Math.min(1,TR.scandal/100)),4); G.labels.push(['СКАНДАЛ',bx-4,by+2,6,'#ffb0a0','right']); }
+  // V33-6/O5.5: сетка HUD — ряд 0 цель (T..T+22), ряд 1 скандал (T+25..T+37) в своей плашке, ряд 2 кошелёк (T+48)
+  if(TR.scandal>12){ const bw=90, lw=Math.ceil(txtW('СКАНДАЛ',6)), pw=lw+bw+14, px=Math.round(W/2-pw/2), bx=px+lw+8, by=T+29; ctx.fillStyle='#120c18c0'; ctx.fillRect(px,T+25,pw,12); ctx.fillStyle=P.ink; ctx.fillRect(bx-1,by-1,bw+2,6); ctx.fillStyle='#3a2030'; ctx.fillRect(bx,by,bw,4); ctx.fillStyle=TR.scandal>70?P.red:'#ff9a3a'; ctx.fillRect(bx,by,Math.round(bw*Math.min(1,TR.scandal/100)),4); G.labels.push(['СКАНДАЛ',px+4,by+2,6,'#ffb0a0','left']); TR.hudScandal={x:px,y:T+25,w:pw,h:12}; } else TR.hudScandal=null;
+  TR.hudGoal={x:Math.round(W/2-gw/2),y:T,w:gw,h:22};
   // кошелёк — только у турникетов/кассы
-  if(z&&z.k==='gate'&&!z.passed) G.labels.push([wallet().coins+' мон. · '+passInfo(),W/2,T+40,7,'#ffd23f']);
+  if(z&&z.k==='gate'&&!z.passed) G.labels.push([wallet().coins+' мон. · '+passInfo(),W/2,T+48,7,'#ffd23f']);
   // пауза
   const pb=Math.max(24,44*DPR/SC); buttons.push({x:R-pb,y:T,w:pb,h:pb,id:'pause',cb:()=>{paused=!paused; SFX.ui();}}); ctx.fillStyle='#120c18c0'; ctx.fillRect(R-pb,T,pb,pb); ctx.fillStyle='#fff'; ctx.fillRect(R-pb*.66,T+pb*.28,pb*.12,pb*.44); ctx.fillRect(R-pb*.46,T+pb*.28,pb*.12,pb*.44);
   // две кнопки справа внизу
@@ -65,7 +71,7 @@ drawTitle=function(){ G.labels=[]; buttons=[]; drawBG(G.t*20); G.labels=[]; ctx.
   bigBtn('ИГРАТЬ',bx,y0,bw,bh,'#d8265e',()=>{ if(!save.cut.intro31){ save.cut.intro31=1; save.cut.intro=1; store(); startCut('intro',()=>startCut('metro',()=>toMap())); } else toMap(); },'play',16);
   const sw=Math.round((bw-10)/2), sh=Math.max(28,44*DPR/SC), sy=y0+bh+12;
   const op=()=>!(window.__econ&&__econ.isOpen());
-  bigBtn('ОБУЧЕНИЕ',bx,sy,sw,sh,save.learned?'#3d5ab0':'#2aa860',()=>{ if(op()) startLearn(); },'learn',8); bigBtn('ПРОБИТЬСЯ 20 с',bx+sw+10,sy,sw,sh,'#3d5ab0',()=>{ if(op()) startExit(); },'exit',8);
+  bigBtn('ОБУЧЕНИЕ',bx,sy,sw,sh,save.learned?'#3d5ab0':'#2aa860',()=>{ if(op()){ if(save.learned&&typeof startLearnStreet==='function'&&typeof unl4==='function'&&unl4('street1')) G.lpick=1; else startLearn(); } },'learn',8); bigBtn('ПРОБИТЬСЯ 20 с',bx+sw+10,sy,sw,sh,'#3d5ab0',()=>{ if(op()) startExit(); },'exit',8);
   const ty=sy+sh+16; G.labels.push(['КОШЕЛЁК',W/2-50,ty,8,'#ffd23f']); G.labels.push(['ЗАСТАВКА',W/2+50,ty,8,'#c8b8e8']);
   buttons.push({x:W/2-95,y:ty-12,w:90,h:24,id:'econ',cb:()=>{ if(op()){ __econ.open(); SFX.ui(); } }}); buttons.push({x:W/2+5,y:ty-12,w:90,h:24,id:'introbtn',cb:()=>{ if(op()) startCut('intro',()=>toTitle()); }});
   if(!save.learned) G.labels.push(['впервые? начни с ОБУЧЕНИЯ',W/2,y0-10,7,'#8fe03a']);
@@ -98,9 +104,9 @@ const END=[ // [название, длительность, отрисовка]
    const hx=Math.min(dx-70,W*.05+t/2.5*(dx-70-W*.05)); spr(S,t<2.5?'walk':'idle',Math.floor(t*10)%8,t>3?'o':'norm',hx,H*.7+4,false,1.1); if(t>3) G.labels.push(['КУРЛЫ.',px,py-18,9,'#fff']);
    sub(t<3?'Твоё место…':t<6?'…уже занято. Голубь с Курского.':'Он тоже хотел успеть к девяти.'); }],
 ];
-CUTS.tripwin={len:9,start:c=>{ c.v=Math.floor(Math.random()*END.length); if(window.__endV!==undefined) c.v=window.__endV; c.len=END[c.v][1]; if(CUT) CUT.len=c.len; },draw:(t,c)=>{ END[c.v][2](t,HERO_SPECS[heroId]); const mm=Math.max(40,Math.min(59,40+Math.floor(20*(1-((TR.tLeft||0)/(TR.tTotal||1)))))); G.labels.push(['УСПЕЛ! 08:'+mm,W/2,SA.t+18,13,P.edge]); }};
+CUTS.tripwin={len:9,start:c=>{ c.v=Math.floor(Math.random()*END.length); if(window.__endV!==undefined) c.v=window.__endV; c.len=END[c.v][1]; if(CUT) CUT.len=c.len; },draw:(t,c)=>{ END[c.v][2](t,heroSpec(heroId)); const mm=Math.max(40,Math.min(59,40+Math.floor(20*(1-((TR.tLeft||0)/(TR.tTotal||1)))))); G.labels.push(['УСПЕЛ! 08:'+mm,W/2,SA.t+18,13,P.edge]); }};
 CUTS.late={len:8,start:c=>{ SFX.alarm(); },draw:(t,c)=>{ office(t); const bx=W*.62, y=H*.7; spr(HERO_SPECS.baba,'idle',0,'angry',bx,y+4,true,1.2); ctx.fillStyle=P.ink; ctx.fillRect(bx+20,H*.18,30,30); ctx.fillStyle='#fff'; ctx.fillRect(bx+22,H*.18+2,26,26); ctx.fillStyle=P.ink; ctx.fillRect(bx+34,H*.18+6,2,10); ctx.fillRect(bx+34,H*.18+14,8,2);
-  const hx=t<4?W*.05+t/4*(bx-60-W*.05):bx-60; spr(HERO_SPECS[heroId],t<4?'walk':'hurt',Math.floor(t*6)%8,'o',hx,y+4,false,1.1); if(t<4) G.labels.push(['на цыпочках…',hx,y-70,7,'#fff']);
+  const hx=t<4?W*.05+t/4*(bx-60-W*.05):bx-60; spr(heroSpec(heroId),t<4?'walk':'hurt',Math.floor(t*6)%8,'o',hx,y+4,false,1.1); if(t<4) G.labels.push(['на цыпочках…',hx,y-70,7,'#fff']);
   if(t>4.5){ ctx.fillStyle='#fff'; ctx.fillRect(bx-34,y-46,18,22); ctx.fillStyle=P.ink; for(let i=0;i<4;i++) ctx.fillRect(bx-31,y-42+i*4,12,1); G.labels.push(['ОБЪЯСНИТЕЛЬНАЯ',bx-25,y-56,7,P.red]); }
   G.labels.push(['09:0'+Math.min(9,Math.floor(t)),W/2,SA.t+18,14,'#ff6a6a']); sub(t<4?'Опоздал. Может, никто не заметит?':'Начальница заметила. Бланк уже распечатан.'); }};
 // витрина: после всех хуков, кнопка «ПРОПУСТИТЬ» есть у всех катсцен (drawCut)

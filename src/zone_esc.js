@@ -29,7 +29,7 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
   step(z){ const h=G.hero; if(z.tapT>0) return; z.tapT=.14; const b=this.ahead(z,z.lane,z.s);
     if(z.lane===1&&z.mode!=='stairs'){ if(b&&b.s-z.s<1.6){ bubble(b.a,pick(['Не толкайтесь!','Стойте справа!','Куда торопимся?']),1.2); TR.scandal+=4; return; } }
     if(b&&b.s-z.s<1.3){ if(b.blk&&!b.leaveT){ bubble(b.a,pick(['Я тут стою.','Мне тоже на работу.','…']),1.1); } return; }
-    z.s+=1; z.hop=1; tev(z.mode==='stairs'?'stairs_step':'esc_step'); const nn=[0,2,4,5,7,9,11]; tone(mtof(72+nn[Math.floor(z.s)%7]),.06,'square',.1); },
+    z.s+=(z.mode==='stairs'?heroStats().stairsMul:1); z.hop=1; tev(z.mode==='stairs'?'stairs_step':'esc_step'); const nn=[0,2,4,5,7,9,11]; tone(mtof(72+nn[Math.floor(z.s)%7]),.06,'square',.1); },
   swap(z){ const want=1-z.lane, h=G.hero; if(!z.ppl.some(p=>p.lane===want&&Math.abs(p.s-z.s)<1.1)){ z.lane=want; z.swT=.3; tev('esc_switch'); SFX.ui(); } else pop('некуда!',h.x,h.y-50,'#ccc',7); },
   ctx(z){ const r={}; const b=this.ahead(z,z.lane,z.s);
     r.b={label:z.mode==='stairs'?'ШАГ':z.lane===0?'ИДТИ СЛЕВА':'ТОРОПИТЬСЯ',col:'#3a6ad8',fn:()=>this.step(z)};
@@ -73,5 +73,5 @@ ZONES.exitz={ title:z=>z.rain?'ДОЖДЛИВЫЙ ВЕСТИБЮЛЬ':'ВЫХО�
     const dx=Math.round(z.len-60-c); ctx.fillStyle=P.ink; ctx.fillRect(dx-4,FY0-74,64,74); ctx.fillStyle=z.rain?'#7a8aa0':'#bfe0ff'; ctx.fillRect(dx-2,FY0-72,60,70); ctx.fillStyle=P.ink; ctx.fillRect(dx+27,FY0-72,2,70);
     if(z.rain){ ctx.fillStyle='#ffffff60'; for(let i=0;i<24;i++){ const x=(i*37+BG.t*30)%60, y=(i*53+BG.t*220)%70; ctx.fillRect(dx-2+x,FY0-72+y,1,4); } ctx.fillStyle='rgba(150,190,255,.12)'; for(let i=0;i<8;i++) ctx.fillRect(Math.round(((i*97)%z.len)-c),FY0+8+(i*13)%40,40,2); }
     hallLight(); drawTripActors([G.hero,...z.npcs]);
-    if(z.rain) for(const e of z.npcs) if(e.umb){ const sx=Math.round(e.x-c), sy=Math.round(e.y-62); ctx.fillStyle=P.ink; ctx.fillRect(sx-13,sy-1,26,7); ctx.fillStyle=e.umb; ctx.fillRect(sx-12,sy,24,5); ctx.fillStyle=P.ink; ctx.fillRect(sx,sy+5,1,10); }
+    // зонты — umb4.js (V33-3)
     goalArrow(z.len-30,FY0-20); } };

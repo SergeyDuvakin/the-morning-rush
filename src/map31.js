@@ -52,7 +52,7 @@ drawMap=function(){ G.labels=[]; buttons=[]; const L=SA.l+6, R=W-SA.r-6, T=SA.t+
     G.labels.push(['рекорд: '+(save.tbest&&save.tbest[idx]||'—')+(save.tbest&&save.tbest[idx]?' очк.':''),L+56,py+28,7,'#5a4a6a','left',null]);
     if(nl.length){ ctx.fillStyle='#8a3ad8'; ctx.fillRect(L+16,py+38,8,8); ctx.fillStyle='#fff'; ctx.fillRect(L+19,py+39,2,4); ctx.fillRect(L+19,py+44,2,1); G.labels.push(['НОВОЕ: '+nl.map(l=>l[2]).join(', '),L+28,py+42,7,'#8a3ad8','left',null]); }
     else G.labels.push(['в пути: '+stationLocs(idx).slice(0,4).join(', '),L+16,py+42,7,'#6a5a7a','left',null]);
-    bigBtn('ИГРАТЬ ▶',R-112,py+(PH-Math.min(PH-10,bh+8))/2,104,Math.min(PH-10,bh+8),'#2aa860',()=>{ if(mapSel===0&&mapLine>0&&!save.cut['line'+mapLine]){ save.cut['line'+mapLine]=1; store(); startCut('line',()=>startTrip(idx),mapLine); } else startTrip(idx); },'go',11); }
+    bigBtn('ИГРАТЬ ▶',R-112,py+(PH-Math.min(PH-10,bh+8))/2,104,Math.min(PH-10,bh+8),'#2aa860',()=>{ if(mapSel===0&&mapLine>0&&!save.cut['line'+mapLine]){ save.cut['line'+mapLine]=1; store(); startCut('line',()=>startDay(idx),mapLine); } else startDay(idx); },'go',11); }
   else { G.labels.push(['Выбери станцию на схеме',L+16,py+12,10,'#1a1020','left',null]);
     const n=ST_THR.findIndex(t=>t>pts); G.labels.push([n<0?'Все станции открыты!':'следующая: «'+LEVELS[n].name+'» — ещё '+(ST_THR[n]-pts)+' очк.',L+16,py+30,7,'#6a5a7a','left',null]);
     const hb=Math.max(26,Math.min(PH-8,44*DPR/SC)), hx=R-hb*2-14, hy=py+(PH-hb)/2;

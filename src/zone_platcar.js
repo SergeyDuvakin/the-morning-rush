@@ -39,7 +39,7 @@ ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛА�
   },
   board(z,d,squeeze){ const h=G.hero; tev(squeeze?'squeeze':'board'); if(z.short) tev('short_board'); z.boarded=true; z.bd=d; z.bT=.9; d.n++; h.pin=true; h.ghost=true; if(z.ph==='closing'&&z.pT<.6){ tev('pinched'); pop('ЗАЖАЛО!',h.x,h.y-52,P.red,9); shake(4); SFX.heavy(); TR.nerves=Math.max(0,TR.nerves-10); } else { pop(squeeze?'ВТИСНУЛСЯ!':'ВОШЁЛ!',h.x,h.y-52,P.neonLime,9); SFX.pick(); } haptic('success'); },
   ctx(z){ const d=z.atDoor; if(!d||z.boarded) return {}; if(d.n<d.cap) return {b:{label:'ВОЙТИ',col:'#2aa860',fn:()=>this.board(z,d)}};
-    return {b:{label:'ВОЙТИ',sq:true,col:'#d87a20',fn:()=>{ z.sq+=.26+(heroId==='baba'?.12:0); shake(1); pop(pick(['ЫЫЫ','ХРУСТ','ВДОХ']),G.hero.x,G.hero.y-50,'#fff',7); if(z.sq>=1){ z.sq=0; this.board(z,d,true); TR.scandal+=10; } }}}; },
+    return {b:{label:'ВОЙТИ',sq:true,col:'#d87a20',fn:()=>{ const S6=heroStats(); z.sq+=S6.TAP; if(S6.TAPSC) TR.scandal+=S6.TAPSC; z.sqT=.5; shake(1); pop(S6.TAPW||pick(['ЫЫЫ','ХРУСТ','ВДОХ']),G.hero.x,G.hero.y-50,'#fff',7); if(z.sq>=1){ z.sq=0; this.board(z,d,true); TR.scandal+=10; } }}}; },
   prog(z){ const h=G.hero, d=this.nearDoor(z); return (z.boarded?1000:0)-Math.abs(h.x-d.x)-Math.abs(h.y-z.y0)+z.trains*30; },
   unstick(z){ const h=G.hero, d=this.nearDoor(z); h.x=d.x; h.y=z.y0+4; for(const e of z.npcs) if(Math.abs(e.x-d.x)<16&&e.y<z.y0+16) e.y=z.y1; if(z.ph==='open'||z.ph==='closing') this.board(z,d,true); },
   bot(z){ const h=G.hero, d=this.nearDoor(z); const r={x:d.x,y:z.y0}; if(z.tank&&z.tank.go){ r.x=z.tank.x-14; r.y=z.tank.y; } if(z.atDoor) r.b=1; else if(h.den>3&&Math.random()<.04) r.a=1; return r; },
@@ -48,7 +48,7 @@ ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛА�
     ctx.fillStyle='#1a1424'; ctx.fillRect(0,wb-62,W,58); ctx.fillStyle='#3a3046'; ctx.fillRect(0,wb-10,W,6);
     // поезд
     const tx=Math.round(z.trainX-c), ty=wb-58, TL=z.short?140:z.len; const t0=z.short?Math.round(z.shX+z.trainX-c):tx;
-    if(z.ph!=='leave'||z.trainX>-z.len-50){ ctx.fillStyle=P.ink; ctx.fillRect(t0-1,ty-1,TL+2,52); ctx.fillStyle='#4a6a8a'; ctx.fillRect(t0,ty,TL,50); ctx.fillStyle=lc; ctx.fillRect(t0,ty+34,TL,3);
+    if((z.ph!=='leave'||z.trainX>-z.len-50)&&!(typeof trainExt4==='function'&&trainExt4(t0,TL,wb-62,TR.line%10,z.doors.map(d=>({sx:d.x-c+z.trainX,open:d.open,hi:z.atDoor===d,full:d.open>0&&d.n>=d.cap}))))){ ctx.fillStyle=P.ink; ctx.fillRect(t0-1,ty-1,TL+2,52); ctx.fillStyle='#4a6a8a'; ctx.fillRect(t0,ty,TL,50); ctx.fillStyle=lc; ctx.fillRect(t0,ty+34,TL,3);
       for(let x=10;x<TL-20;x+=30){ ctx.fillStyle=P.ink; ctx.fillRect(t0+x,ty+8,20,16); ctx.fillStyle='#ffe9a8'; ctx.fillRect(t0+x+1,ty+9,18,14); }
       for(const d of z.doors){ const dx=Math.round(d.x-c+(z.trainX)), o=Math.round(d.open*8); ctx.fillStyle=P.ink; ctx.fillRect(dx-11,ty+4,22,46); ctx.fillStyle=z.atDoor===d?'#ffe9a8':'#5a7a9a'; ctx.fillRect(dx-10,ty+5,20,44);
         if(d.open>0){ ctx.fillStyle='#2a1a1a'; ctx.fillRect(dx-o,ty+5,o*2,44); ctx.fillStyle='#ffe0a0'; ctx.fillRect(dx-o+1,ty+8,o*2-2,8); }
@@ -63,36 +63,43 @@ ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛА�
     if(z.ph==='closing'&&Math.floor(G.t*6)%2){ ctx.fillStyle='rgba(255,60,60,.12)'; ctx.fillRect(0,0,W,H); }
   } };
 // ================= ЗОНА: ВАГОН — охота за местом =================
-ZONES.car={ title:z=>z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controller?'ВАГОН · КОНТРОЛЁР!':'ВАГОН · НАЙДИ МЕСТО',
+ZONES.car={ title:z=>z.back?'ОБРАТНЫЙ ПОЕЗД · 1 ОСТАНОВКА':z.over?'ВАГОН · ПРОЕХАЛ!':z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controller?'ВАГОН · КОНТРОЛЁР!':'ВАГОН · НАЙДИ МЕСТО',
   tip:z=>'место освобождается на остановках — беги и жми «СЕСТЬ»; на твоей — к двери',
-  init(z){ z.len=Math.max(W,500); const L=z.len; z.T=0; z.spot=0; z.best=0; z.stopAt=[]; for(let i=1;i<=z.stops;i++) z.stopAt.push(z.ride*i/(z.stops+1)); z.si=0; z.stopT=0; z.arrive=false; z.swT=z.sway; z.warn=0; z.sleep=0;
-    z.slots=[]; for(let bx=24;bx+66<L-24;bx+=100){ for(let k=0;k<3;k++) z.slots.push({x:bx+11+k*22,occ:null}); }
-    z.poles=[]; for(let bx=24;bx<L-24;bx+=100) z.poles.push(bx+83);
-    z.doorsX=[]; for(let bx=24;bx<L-24;bx+=200) z.doorsX.push(bx+83);
+  init(z){ z.len=Math.max(W,500); const L=z.len; z.T=0; z.sepMin=.5; z.sepCap=.5; z.maxStep=.9; z.brakeT=0; z.layX=0; z.spot=0; z.best=0; z.stopAt=[]; for(let i=1;i<=z.stops;i++) z.stopAt.push(z.ride*i/(z.stops+1)); z.si=0; z.stopT=0; z.arrive=false; z.swT=z.sway; z.warn=0; z.sleep=0;
+    const B0=z.bx0=24+50; // M2-ревью: первый модуль (места/двери) правее зоны джойстика
+    z.slots=[]; for(let bx=B0;bx+66<L-60;bx+=100){ for(let k=0;k<3;k++) z.slots.push({x:bx+11+k*22,occ:null}); }
+    z.poles=[]; for(let bx=B0;bx<L-24;bx+=100) z.poles.push(bx+83);
+    z.doorsX=[]; for(let bx=B0;bx<L-24;bx+=200) z.doorsX.push(bx+83);
+    { const keep=z.doorsX.filter(d=>d<L-130); if(keep.length) z.doorsX=keep; } // M1-18: дверь у самого торца при len≈W оказывалась под кнопками (правило G)
     // почти все места заняты
     const free=z.slots.length>4?1:0; const fr=new Set(); while(fr.size<free) fr.add(ri(2,z.slots.length-1));
-    z.slots.forEach((s,i)=>{ if(!fr.has(i)){ const e=mkNpc(pick(['polite','student','aunt','sleeper','tourist','granny','seeds']),s.x,z.y0); e.sit=s; s.occ=e; e.pin=true; e.st='sleep'; z.npcs.push(e); } });
+    z.slots.forEach((s,i)=>{ if(!fr.has(i)){ const e=mkNpc(pick(['polite','student','aunt','sleeper','tourist','granny','seeds']),s.x,z.y0); e.sit=s; s.occ=e; e.pin=true; e.ghost=true; e.st='sleep'; z.npcs.push(e); } });
     for(let i=0;i<z.crowd;i++){ const e=mkNpc(qType(z.d),rnd(40,L-30),rnd(z.y0+14,z.y1)); z.npcs.push(e); e.hx=e.x; e.hy=e.y; }
     if(z.controller){ const c=mkNpc('controller',L+10,(z.y0+z.y1)/2+6); c.ctl=true; c.m=20; z.npcs.push(c); z.ctl=c; }
-    G.hero.x=z.doorsX[0]; G.hero.y=z.y0+14; },
+    G.hero.x=z.doorsX[0]; G.hero.y=z.y0+14; if(z.back){ tev('back_car'); } },
   update(z,dt){ const h=G.hero, L=z.len; if(!z.arrive) z.T+=dt;
     // качка
     z.swT-=dt; if(z.swT<1.6&&!z.warn){ z.warn=1; z.warnS=pick(['ТОРМОЖЕНИЕ','ПОВОРОТ','РЫВОК']); SFX.squeak(); } if(z.swT<=0){ z.swT=z.sway+rnd(-.6,.8); z.warn=0; const dir=Math.random()<.5?-1:1; shake(3); SFX.land();
-      for(const e of z.npcs){ if(!e.sit&&!e.ctl) e.x+=dir*rnd(8,18); }
-      if(!h.seat&&!h.hold&&!z.arrive){ tev('sway_hit'); h.x+=dir*24; h.stun=.5; TR.nerves=Math.max(0,TR.nerves-6); pop('ШАТНУЛО!',h.x,h.y-50,'#ff9a3a',8); } }
+      for(const e of z.npcs){ if(!e.sit&&!e.ctl&&e.leaving===undefined) e.kx=(e.kx||0)+dir*rnd(40,90); } z.brakeT=.9; // V33-1: толчок = плавный импульс, не телепорт
+      if(!h.seat&&!h.hold&&!z.arrive&&heroStats().swayImmune){ tev('sway_immune'); } else if(!h.seat&&!h.hold&&!z.arrive){ tev('sway_hit'); h.kx=dir*120; h.stun=.5; TR.nerves=Math.max(0,TR.nerves-6); pop('ШАТНУЛО!',h.x,h.y-50,'#ff9a3a',8); } }
     // остановки: кто-то выходит — место свободно
     if(z.si<z.stopAt.length&&z.T>=z.stopAt[z.si]){ z.si++; z.stopT=3.2; tev('stop'); SFX.doors(); say('Остановка. Кто-то встаёт!',1.4,P.neonLime);
-      const occ=z.slots.filter(s=>s.occ&&s.occ!=='hero'); for(let i=0;i<Math.min(occ.length,ri(1,2));i++){ const s=pick(occ); const e=s.occ; if(!e||e==='hero') continue; s.occ=null; s.fresh=2; e.sit=null; e.pin=false; e.st='walk'; e.leaving=pick(z.doorsX); }
+      const occ=z.slots.filter(s=>s.occ&&s.occ!=='hero'); const pre=(z.pre||[]).filter(s=>s.occ&&s.occ!=='hero'); z.pre=null; for(let i=0;i<(pre.length||Math.min(occ.length,ri(1,2)));i++){ const s=pre[i]||pick(occ); const e=s.occ; if(!e||e==='hero') continue; s.occ=null; s.fresh=2; e.sit=null; e.pin=false; e.ghost=false; e.st='walk'; e.leaving=pick(z.doorsX); }
       for(let i=0;i<ri(1,3);i++){ const e=mkNpc(pick(['granny','polite','aunt','student']),pick(z.doorsX),z.y0+8); e.seek=Math.max(1,3.2-z.d*.1)+Math.random()*1.4; e.sspd=24+Math.min(24,z.d*1.2); z.npcs.push(e); } }
     if(z.stopT>0) z.stopT-=dt;
     for(const s of z.slots) if(s.fresh>0) s.fresh-=dt;
-    for(const e of z.npcs){ if(e.sit){ e.x=e.sit.x; e.y=z.y0; e.set('sleep'); continue; }
+    for(const e of z.npcs){ if(e.sit){ e.x=e.sit.x; e.y=z.y0; e.ghost=true; e.kx=e.ky=0; e.set('sleep'); continue; }
       if(e.leaving!==undefined){ if(walkTo(e,e.leaving,z.y0+4,44,dt)) e.gone=true; continue; }
-      if(e.ctl){ walkTo(e,-20,e.y,34,dt); e.set('walk'); for(const o of z.npcs){ if(o!==e&&!o.sit&&Math.abs(o.x-e.x)<14&&Math.abs(o.y-e.y)<10){ o.y+=o.y>e.y?14:-14; o.x-=10; if(Math.random()<.2) bubble(o,'АЙ!',.6); } }
-        if(!h.seat&&Math.abs(h.x-e.x)<14&&Math.abs(h.y-e.y)<10&&!h.stun){ tev('ctl_hit'); h.stun=1.1; h.x-=26; bubble(e,'ВАШ БИЛЕТИК!',1.4,P.red); shake(3); SFX.heavy(); TR.nerves=Math.max(0,TR.nerves-10); }
+      if(e.ctl){ walkTo(e,-20,e.y,34,dt); e.set('walk'); for(const o of z.npcs){ if(o!==e&&!o.sit&&Math.abs(o.x-e.x)<14&&Math.abs(o.y-e.y)<10&&!(o.ky)){ o.ky=(o.y>e.y?1:-1)*50; o.kx=-40; if(Math.random()<.2) bubble(o,'АЙ!',.6); } }
+        if(!h.seat&&Math.abs(h.x-e.x)<14&&Math.abs(h.y-e.y)<10&&!h.stun){ tev('ctl_hit'); h.stun=1.1; h.kx=-130; bubble(e,'ВАШ БИЛЕТИК!',1.4,P.red); shake(3); SFX.heavy(); TR.nerves=Math.max(0,TR.nerves-10); }
         if(e.x<-10){ e.x=L+40; } continue; }
       if(e.seek!==undefined){ e.seek-=dt; if(e.seek<=0){ const f=z.slots.filter(s=>!s.occ).sort((a,b)=>Math.abs(a.x-e.x)-Math.abs(b.x-e.x))[0]; if(f){ if(walkTo(e,f.x,z.y0,e.sspd||40,dt)&&!f.occ){ f.occ=e; e.sit=f; e.pin=true; e.seek=undefined; if(f.near) pop('ОПЕРЕДИЛИ!',f.x,z.y0-50,P.red,8); } } else e.seek=undefined; } continue; }
-      if(e.hx!==undefined) walkTo(e,e.hx,e.hy,14,dt); }
+      // V33-1: стоящие не «тянутся домой» (это и давало дрожь против толкотни) — только затухающий импульс от толчков
+      if(e.kx||e.ky){ e.x+=(e.kx||0)*dt; e.y+=(e.ky||0)*dt; const k=Math.exp(-dt*5); e.kx=(e.kx||0)*k; e.ky=(e.ky||0)*k; if(Math.abs(e.kx)<2) e.kx=0; if(Math.abs(e.ky)<2) e.ky=0; e.set(Math.abs(e.kx)>10?'walk':'idle'); }
+      else if(e.st==='walk') e.set('idle'); }
+    if(h.kx){ h.x+=h.kx*dt; h.kx*=Math.exp(-dt*5); if(Math.abs(h.kx)<2) h.kx=0; }
+    if(z.brakeT>0) z.brakeT-=dt;
+    z.layX=Math.round(Math.sin(z.t*Math.PI*2*.8)); // качка всего слоя: 1 px, 0.8 Гц
     z.npcs=z.npcs.filter(e=>!e.gone);
     // герой: сидит/держится
     if(h.seat){ h.x=h.seat.x; h.y=z.y0; } if(h.hold!=null){ h.x+=(h.hold-6-h.x)*Math.min(1,dt*8); }
@@ -101,13 +108,22 @@ ZONES.car={ title:z=>z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controll
     // конечная: сонливость
     if(z.terminal&&h.seat&&!z.arrive){ z.sleep=Math.min(1,z.sleep+dt*.07); if(z.sleep>.6&&!z.zzz){ z.zzz=1; say('Глаза слипаются… жми «ПРОСНУТЬСЯ»!',1.6,'#9cf'); } } else z.sleep=Math.max(0,z.sleep-dt*.2);
     // прибытие
-    if(z.T>=z.ride&&!z.arrive){ if(z.terminal) tev('terminal_ok'); if(z.terminal&&z.sleep>=.95){ return tripFinish(false,'depot'); } z.arrive=true; z.arrT=9; SFX.doors(); say('Ваша станция! Выход — к дверям',1.8,P.neonLime); }
-    if(z.arrive){ z.arrT-=dt; if(z.arrT<=0){ tev('overshoot'); z.arrive=false; z.T=z.ride-8; TR.tLeft-=20; say('Проехал! −20 с, обратно…',2,P.red); SFX.hurt(); } }
+    if(z.T>=z.ride&&!z.arrive){ if(z.terminal) tev('terminal_ok'); if(z.terminal&&z.sleep>=.95){ return tripFinish(false,'depot'); } z.arrive=true; z.arrT=z.back?1.6:z.over?8:9; SFX.doors();
+      if(z.back){ tev('back_arrive'); pop('ДОЕХАЛ, НАКОНЕЦ-ТО!',h.x,h.y-56,P.neonLime,10,1.6); say('ДОЕХАЛ, НАКОНЕЦ-ТО! Твоя станция',1.8,P.neonLime); }
+      else if(z.over){ tev('over_next'); say('ПРОЕХАЛ! Выйди и садись в обратную сторону ←',2.4,'#ff9a3a'); }
+      else say('Ваша станция! Выход — к дверям',1.8,P.neonLime); }
+    if(z.arrive){ z.arrT-=dt; if(z.arrT<=0){ // V33-2: никакого цикла — обратный поезд и следующая станция выпускают сами
+      if(z.back){ tev('back_auto'); return carLeave(z); }
+      if(z.over){ tev('over_auto'); say('«Освобождаем вагоны!» — тебя вынесло на перрон',1.8,'#ff9a3a'); return carLeave(z); }
+      if(z.terminal){ tev('terminal_auto'); say('Конечная! Поезд дальше не идёт',1.6,'#ccc'); return carLeave(z); }
+      if(TR.mode==='learn'){ z.arrT=9; return; }
+      tev('overshoot'); z.over=1; z.arrive=false; z.T=z.ride-6; TR.over={t0:TR.tLeft,end:false}; TR.wd.best=-1e9; TR.wd.t=0;
+      say('ПРОЕХАЛ! Выйди и садись в обратную сторону ←',2.6,P.red); pop('ПРОЕХАЛ!',h.x,h.y-56,P.red,10,1.4); SFX.hurt(); shake(2); } }
     const dn=z.doorsX.reduce((a,b)=>Math.abs(b-h.x)<Math.abs(a-h.x)?b:a); z.atExit=z.arrive&&!h.seat&&Math.abs(h.x-dn)<14&&h.y<z.y0+16;
-    z.hint=z.arrive?'К ДВЕРИ И «ВЫЙТИ»':z.terminal&&h.seat?'не спи! '+Math.round(z.sleep*100)+'% сна':'ехать ещё '+Math.max(0,Math.ceil(z.ride-z.T))+' с · ты: '+['стоишь','у поручня','в углу','сидишь'][z.spot];
+    z.hint=z.over&&!z.arrive?'ПРОЕХАЛ! Выйди и садись в обратную сторону ←':z.back&&!z.arrive?'обратно 1 остановку: ехать '+Math.max(0,Math.ceil(z.ride-z.T))+' с':z.arrive?(z.over?'ВЫЙДИ — и на обратный поезд ←':'К ДВЕРИ И «ВЫЙТИ»'):z.terminal&&h.seat?'не спи! '+Math.round(z.sleep*100)+'% сна':'ехать ещё '+Math.max(0,Math.ceil(z.ride-z.T))+' с · ты: '+['стоишь','у поручня','в углу','сидишь'][z.spot];
   },
   ctx(z){ const h=G.hero, r={};
-    if(z.atExit) { r.b={label:'ВЫЙТИ',col:'#2aa860',fn:()=>{ if(!z.fin){ tev('exit_car'); z.fin=1; h.seat=null; h.hold=null; zoneDone(); } }}; return r; }
+    if(z.atExit) { r.b={label:'ВЫЙТИ',col:'#2aa860',fn:()=>{ if(!z.fin){ tev('exit_car'); carLeave(z); } }}; return r; }
     if(h.seat){ if(z.terminal&&z.sleep>.3) r.b={label:'ПРОСНУТЬСЯ',col:'#d87a20',fn:()=>{ tev('wake'); z.sleep=Math.max(0,z.sleep-.18); shake(1); }};
       else { const g=z.npcs.find(e=>e.type==='granny'&&!e.sit&&Math.abs(e.x-h.x)<36); if(g){ if(!g.bub) bubble(g,'Ох, мои ноги…',1.4); r.b={label:'УСТУПИТЬ',col:'#2aa860',fn:()=>{ const s=h.seat; h.seat=null; s.occ=g; g.sit=s; g.pin=true; g.seek=undefined; g.hx=undefined; h.y=z.y0+16; TR.polite++; tev('give_seat'); pop('ВЕЖЛИВОСТЬ +20',h.x,h.y-56,P.neonLime,8); bubble(g,'Дай бог здоровья!',1.4); }}; } } return r; }
     if(z.arrive) return r;
@@ -117,25 +133,80 @@ ZONES.car={ title:z=>z.terminal?'ВАГОН · ДО КОНЕЧНОЙ':z.controll
     if(h.hold==null&&(p!==undefined||corner)) r.b={label:corner?'В УГОЛ':'ДЕРЖАТЬСЯ',col:'#3a6ad8',fn:()=>{ tev(corner?'corner':'hold'); h.hold=corner?h.x+6:p; h.corner=corner; pop(corner?'УГОЛ!':'ДЕРЖУСЬ',h.x,h.y-50,'#9cf',8); }};
     return r; },
   prog(z){ return z.T*10+z.spot*20+(z.arrive?-Math.abs(G.hero.x-z.doorsX[0])*.1:0); },
-  unstick(z){ const h=G.hero; if(z.arrive){ h.seat=null; h.hold=null; h.x=z.doorsX.reduce((a,b)=>Math.abs(b-h.x)<Math.abs(a-h.x)?b:a); h.y=z.y0+6; if(!z.fin){ z.fin=1; zoneDone(); } } else z.T+=4; },
+  unstick(z){ const h=G.hero; if(z.arrive){ h.seat=null; h.hold=null; h.x=z.doorsX.reduce((a,b)=>Math.abs(b-h.x)<Math.abs(a-h.x)?b:a); h.y=z.y0+6; if(!z.fin) carLeave(z); } else z.T+=4; },
   bot(z){ const h=G.hero, r={x:h.x,y:h.y};
     if(z.arrive){ if(h.seat&&!z.atExit){ r.stick={x:0,y:1}; return r; } const dn=z.doorsX.reduce((a,b)=>Math.abs(b-h.x)<Math.abs(a-h.x)?b:a); r.x=dn; r.y=z.y0+4; if(z.atExit) r.b=1; return r; }
     if(h.seat){ if(z.ctxB) r.b=Math.random()<.5?1:0; if(z.ctxB&&z.ctxB.label==='УСТУПИТЬ') r.b=Math.random()<.02?1:0; return r; }
     if(z.gangway&&!z.egg){ r.x=z.len-20; r.y=z.y0+12; if(z.ctxB) r.b=1; return r; }
     const f=z.slots.filter(s=>!s.occ).sort((a,b)=>Math.abs(a.x-h.x)-Math.abs(b.x-h.x))[0]; if(f){ r.x=f.x; r.y=z.y0+4; if(z.ctxB&&z.ctxB.label==='СЕСТЬ') r.b=1; return r; }
     if(h.hold==null){ const p=z.poles.reduce((a,b)=>Math.abs(b-h.x)<Math.abs(a-h.x)?b:a); r.x=p; r.y=z.y0+16; if(z.ctxB) r.b=1; } return r; },
-  draw(z){ const lc=LINE_COL[TR.line%10], c=G.cam, sh=z.swT<.3?Math.round(Math.sin(G.t*60)):0;
+  draw(z){ const lc=LINE_COL[TR.line%10], c=G.cam, sh=0; ctx.fillStyle='#d9d2c0'; ctx.fillRect(-4,0,W+8,FY0); ctx.fillStyle='#7a6a5a'; ctx.fillRect(-4,FY0,W+8,H-FY0); ctx.save(); ctx.translate(z.layX||0,0); // V33-1: качка — смещение всего слоя
     ctx.fillStyle='#d9d2c0'; ctx.fillRect(0,0,W,FY0); ctx.fillStyle='#bfb6a2'; ctx.fillRect(0,0,W,10); ctx.fillStyle=P.lampHot; for(let x=-(Math.round(c)%60);x<W;x+=60) ctx.fillRect(x+10,3,36,3);
     for(let x=24;x<z.len;x+=100){ const sx=Math.round(x-c); ctx.fillStyle=P.ink; ctx.fillRect(sx+2,22+sh,62,40); ctx.fillStyle=z.stopT>0||z.arrive?'#c8bca0':'#1a1424'; ctx.fillRect(sx+4,24+sh,58,36); if(!(z.stopT>0||z.arrive)){ const tl=(BG.t*300+x*3)%58; ctx.fillStyle=P.lamp; ctx.fillRect(sx+4+tl,40+sh,2,2); } ctx.fillStyle=lc; ctx.fillRect(sx+2,64,62,2); }
     for(const dx of z.doorsX){ const sx=Math.round(dx-c), op=z.stopT>0||z.arrive; ctx.fillStyle=P.ink; ctx.fillRect(sx-13,FY0-74,26,72); ctx.fillStyle=op?'#c8bca0':'#8a8a9a'; ctx.fillRect(sx-12,FY0-73,24,70); if(!op){ ctx.fillStyle=P.ink; ctx.fillRect(sx,FY0-73,1,70); ctx.fillStyle='#bfe0ff'; ctx.fillRect(sx-9,FY0-66,6,22); ctx.fillRect(sx+4,FY0-66,6,22); } if(z.arrive) goalArrow(dx,FY0-84,P.neonLime); }
     if(z.gangway){ const sx=Math.round(z.len-14-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-4,FY0-76,18,74); ctx.fillStyle='#6a5a7a'; ctx.fillRect(sx-3,FY0-75,16,72); G.labels.push(['ТАМБУР',sx+4,FY0-82,6,'#c9f']); }
     // сиденья
-    for(let bx=24;bx+66<z.len-24;bx+=100){ const sx=Math.round(bx-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-1,FY0-26,68,22); ctx.fillStyle=shade(lc,-.2); ctx.fillRect(sx,FY0-25,66,12); ctx.fillStyle=shade(lc,-.45); ctx.fillRect(sx,FY0-13,66,8); }
+    for(let bx=(z.bx0||24);bx+66<z.len-(z.bx0?60:24);bx+=100){ const sx=Math.round(bx-c); ctx.fillStyle=P.ink; ctx.fillRect(sx-1,FY0-26,68,22); ctx.fillStyle=shade(lc,-.2); ctx.fillRect(sx,FY0-25,66,12); ctx.fillStyle=shade(lc,-.45); ctx.fillRect(sx,FY0-13,66,8); }
     for(const s of z.slots) if(!s.occ){ const sx=Math.round(s.x-c), on=Math.floor(G.t*4)%2; ctx.fillStyle=P.ink; ctx.fillRect(sx-11,FY0-28,22,17); ctx.fillStyle=on?P.neonLime:'#7aff9a'; ctx.fillRect(sx-10,FY0-27,20,15); G.labels.push(['МЕСТО',sx,FY0-36,8,P.neonLime]); goalArrow(s.x,FY0-44,P.neonLime); }
     ctx.fillStyle='#7a6a5a'; ctx.fillRect(0,FY0,W,H-FY0); persFloor(c,'#5a4a3a',30); floorAO();
     for(const p of z.poles){ const sx=Math.round(p-c), hi=!G.hero.seat&&G.hero.hold==null&&Math.abs(p-G.hero.x)<60; ctx.fillStyle=P.ink; ctx.fillRect(sx-1,0,4,FY1); ctx.fillStyle=hi?(Math.floor(G.t*4)%2?'#9cf':'#fff'):'#d8d8e8'; ctx.fillRect(sx,0,2,FY1); if(hi) G.labels.push(['ПОРУЧЕНЬ',sx,FY0+4,6,'#9cf']); }
     ctx.fillStyle=P.ink; ctx.fillRect(0,12,W,2); ctx.fillStyle='#d8d8e8'; ctx.fillRect(0,12,W,1);
-    drawTripActors([G.hero,...z.npcs]);
+    drawTripActors([G.hero,...z.npcs]); ctx.restore();
     if(z.terminal&&G.hero.seat&&z.sleep>.2){ ctx.fillStyle='rgba(10,6,30,'+(z.sleep*.6)+')'; ctx.fillRect(0,0,W,H); G.labels.push(['Z z z',Math.round(G.hero.x-c)+14,G.hero.y-60,8,'#9cf']); }
     if(z.swT<1.6&&!z.arrive){ const bl=Math.floor(G.t*6)%2, cx=Math.round(W/2), cy=58; ctx.fillStyle=P.ink; ctx.beginPath(); ctx.moveTo(cx,cy-16); ctx.lineTo(cx+18,cy+14); ctx.lineTo(cx-18,cy+14); ctx.fill(); ctx.fillStyle=bl?'#ffd23f':'#ff8a1f'; ctx.beginPath(); ctx.moveTo(cx,cy-12); ctx.lineTo(cx+14,cy+12); ctx.lineTo(cx-14,cy+12); ctx.fill(); G.labels.push(['!',cx,cy+3,12,P.ink,'center',null]); G.labels.push([(z.warnS||'ТОРМОЖЕНИЕ')+' — ДЕРЖИСЬ',cx,cy+26,9,'#ffd23f']); }
   } };
+
+// ================= V33-2: проезд своей станции → переход на встречную → обратный поезд 1 перегон =================
+function carLeave(z){ const h=G.hero; if(z.fin) return; z.fin=1; h.seat=null; h.hold=null; h.pin=false; zoneDone();
+  if(z.over&&!z.back&&!z.detAdded){ z.detAdded=1; tev('detour_start');
+    const back={k:'car',back:true,det:1,ride:12,stops:0,sway:99,seats:2,crowd:Math.max(4,Math.round((z.crowd||10)*.45)),d:z.d};
+    TR.zones.splice(TR.zi+1,0,{k:'xfer',det:1,d:z.d},back); }
+  if(z.back&&TR.over&&!TR.over.end){ TR.over.end=true; TR.over.cost=Math.round(TR.over.t0-TR.tLeft); tev('detour_done'); } }
+// лимит штрафа для проезда — 60 с: дольше — «дошёл пешком», пропускаем остаток объезда
+function detourGuard(){ const o=TR.over; if(!o||o.end||TR.done) return; if(o.t0-TR.tLeft<60) return;
+  const last=TR.zones.map(q=>!!q.det).lastIndexOf(true); if(last<TR.zi) return; o.end=true; o.cost=60; o.capped=true; tev('detour_cap');
+  TR.zi=last; if(TR.z) TR.z.done=true; TR.next=.55; say('Ладно, дошёл до своей пешком по переходу…',2,'#ccc'); }
+ZONES.xfer={ title:z=>'ПЕРЕХОД НА ВСТРЕЧНУЮ ←',
+  tip:z=>'иди налево по лестнице к обратному поезду, у двери жми «ВОЙТИ»',
+  init(z){ z.len=Math.max(W,420); const L=z.len; z.doorX=Math.round(L*.3); z.stA=Math.round(L*.48); z.stB=Math.round(L*.78); z.boarded=false; z.ourX=0; z.noLeave=true;
+    for(let i=0;i<Math.min(8,3+(z.d>>2));i++){ const e=mkNpc(qType(z.d),rnd(40,L-60),rnd(z.y0+4,z.y1)); e.dir=1; e.spd2=rnd(20,32); e.free=1; z.npcs.push(e); }
+    const h=G.hero; h.x=L-125; /* не под кнопками A/B (ширина ~100 + отступ) */ h.y=(z.y0+z.y1)/2; h.face=-1; tev('xfer'); },
+  hump(z,x){ const a=z.stA, b=z.stB; if(x<=a||x>=b) return 0; const k=(x-a)/(b-a); return Math.round(26*Math.min(1,Math.min(k,1-k)*3.2)); },
+  update(z,dt){ const h=G.hero, L=z.len; z.ourX+=dt*(60+z.t*120);
+    for(const e of z.npcs){ e.x+=e.dir*e.spd2*dt; e.face=e.dir; e.set('walk'); e.z=this.hump(z,e.x); wrapFlow(z,e,()=>{ e.y=rnd(z.y0+4,z.y1); }); }
+    h.z=this.hump(z,h.x); z.slow=h.z>0?.8:1;
+    z.atDoor=!z.boarded&&Math.abs(h.x-z.doorX)<12&&h.y<z.y0+12;
+    if(z.boarded){ z.lockHero=true; walkTo(h,z.doorX,z.y0-14,40,dt); h.y=Math.max(h.y,z.y0-14); z.bT-=dt; if(z.bT<=0&&!z.fin){ z.fin=1; zoneDone(); } }
+    z.hint=z.boarded?'обратно, одну остановку…':z.atDoor?'ЖМИ «ВОЙТИ»!':h.x>z.stA?'ПРОЕХАЛ! Выйди и садись в обратную сторону ←':'к двери обратного поезда ←'; },
+  board(z){ const h=G.hero; if(z.boarded) return; tev('xfer_board'); z.boarded=true; z.bT=.7; h.pin=true; h.ghost=true; h.z=0; pop('В ОБРАТНЫЙ!',h.x,h.y-52,P.neonLime,9); SFX.pick(); haptic('success'); },
+  ctx(z){ if(z.atDoor) return {b:{label:'ВОЙТИ',col:'#2aa860',fn:()=>this.board(z)}}; return {}; },
+  prog(z){ const h=G.hero; return (z.boarded?1000:0)-Math.abs(h.x-z.doorX)-Math.abs(h.y-z.y0); },
+  unstick(z){ const h=G.hero; h.x=z.doorX; h.y=z.y0+4; h.z=0; this.board(z); },
+  bot(z){ const h=G.hero; const r={x:z.doorX,y:z.y0+2}; if(z.atDoor) r.b=1; return r; },
+  draw(z){ const lc=LINE_COL[TR.line%10], c=G.cam, wb=FY0-4, L=z.len; hallBG(z,{wall:'#d6ccb0'});
+    // пути: слева — встречная (обратный поезд ждёт), справа — наш уезжает вправо
+    ctx.fillStyle='#1a1424'; ctx.fillRect(0,wb-62,W,58); ctx.fillStyle='#3a3046'; ctx.fillRect(0,wb-10,W,6);
+    const ty=wb-58, t1=Math.round(-60-c), tw=Math.round(z.stA-8+60);
+    if(!(typeof trainExt4==='function'&&trainExt4(t1,tw,wb-62,TR.line%10,[{sx:z.doorX-c,open:1,hi:!!z.atDoor}]))){
+    ctx.fillStyle=P.ink; ctx.fillRect(t1-1,ty-1,tw+2,52); ctx.fillStyle='#4a6a8a'; ctx.fillRect(t1,ty,tw,50); ctx.fillStyle=lc; ctx.fillRect(t1,ty+34,tw,3);
+    for(let x=6;x<tw-20;x+=30){ if(Math.abs(t1+x+10-(z.doorX-c))<20) continue; ctx.fillStyle=P.ink; ctx.fillRect(t1+x,ty+8,20,16); ctx.fillStyle='#ffe9a8'; ctx.fillRect(t1+x+1,ty+9,18,14); }
+    const dx=Math.round(z.doorX-c), op=8; ctx.fillStyle=P.ink; ctx.fillRect(dx-11,ty+4,22,46); ctx.fillStyle='#2a1a1a'; ctx.fillRect(dx-op,ty+5,op*2,44); ctx.fillStyle=z.atDoor?'#fff3c0':'#ffe0a0'; ctx.fillRect(dx-op+1,ty+8,op*2-2,8);
+    ctx.fillStyle='#4a6a8a'; ctx.fillRect(dx-10-op,ty+5,10,44); ctx.fillRect(dx+op,ty+5,10,44);
+    // наш поезд уезжает
+    const ox=Math.round(z.stB+z.ourX-c); if(ox<W+10){ ctx.fillStyle=P.ink; ctx.fillRect(ox-1,ty-1,L+2,52); ctx.fillStyle='#4a6a8a'; ctx.fillRect(ox,ty,L,50); ctx.fillStyle=lc; ctx.fillRect(ox,ty+34,L,3); }
+    }
+    else { const ox=Math.round(z.stB+z.ourX-c); if(ox<W+10) trainExt4(ox,L,wb-62,TR.line%10,[]); }
+    { const t='← В ОБРАТНУЮ СТОРОНУ', w=Math.ceil(txtW(t,8))+18; wallSign(z.doorX-w/2,SIGN_Y(),w,15,t,lc,'#fff',8); } /* M6: ширина по тексту */
+    ctx.fillStyle='#e8d040'; ctx.fillRect(0,wb+2,W,2);
+    // лестница-мостик над путями
+    const a=Math.round(z.stA-c), b=Math.round(z.stB-c);
+    // мостик: два марша (вверх справа, вниз слева) + площадка, перила со стойками
+    const N=9, st=Math.max(4,Math.round((b-a)/2/(N+2))), dk=FY0+2-N*4;
+    for(let i=0;i<N;i++){ const y=FY0+2-i*4, x0=a+i*st, x1=b-i*st; ctx.fillStyle=P.ink; ctx.fillRect(x0-1,y-1,x1-x0+2,6); ctx.fillStyle='#7c7a88'; ctx.fillRect(x0,y+2,x1-x0,3); ctx.fillStyle=i%2?'#b8b6c4':'#c8c6d4'; ctx.fillRect(x0,y,x1-x0,2); }
+    ctx.fillStyle=P.ink; ctx.fillRect(a+N*st-1,dk-3,b-a-2*N*st+2,5); ctx.fillStyle='#d8d6e2'; ctx.fillRect(a+N*st,dk-2,b-a-2*N*st,2);
+    ctx.fillStyle='#3a3a44'; for(let i=0;i<=N;i+=3){ ctx.fillRect(a+i*st,FY0-6-i*4,1,8); ctx.fillRect(b-i*st,FY0-6-i*4,1,8); }
+    for(let i=0;i<N*st;i++){ ctx.fillRect(a+i,Math.round(FY0-6-i*4/st),1,1); ctx.fillRect(b-i,Math.round(FY0-6-i*4/st),1,1); } ctx.fillRect(a+N*st,FY0-6-N*4,b-a-2*N*st,1);
+    G.labels.push(['ПЕРЕХОД',Math.round((a+b)/2),dk-12,7,'#fff']);
+    hallLight();
+    drawTripActors([G.hero,...z.npcs]);
+    if(!z.boarded) goalArrow(z.doorX,wb-62,P.neonLime); } };

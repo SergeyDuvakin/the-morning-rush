@@ -14,16 +14,17 @@ function hallBG(z,o={}){ const cam=G.cam, lc=LINE_COL[TR.line%10]; const wallB=F
   ctx.fillStyle=o.floor||'#7a7080'; ctx.fillRect(0,wallB,W,H-wallB); ctx.fillStyle=P.ink; ctx.fillRect(0,wallB,W,1); persFloor(cam,o.floor2||'#6a6070',34); }
 function hallLight(){ floorAO(); lampPools(G.cam); }
 window.SIGN_Y=()=>Math.max(66,Math.min(FY0-60,Math.round(H*.24)));
-function wallSign(x,y,w,h,txt,col,tcol='#fff',size=8){ const sx=Math.round(x-G.cam); if(sx+w<-10||sx>W+10) return; ctx.fillStyle=P.ink; ctx.fillRect(sx-1,y-1,w+2,h+2); ctx.fillStyle=col; ctx.fillRect(sx,y,w,h); G.labels.push([txt,sx+w/2,y+h/2,size,tcol]); }
-function drawTripActors(list){ const arr=[...list].sort((a,b)=>a.y-b.y); for(const a of arr){ if(a.hide) continue;
-    if(a===G.hero){ ctx.save(); ctx.filter='brightness(0) invert(1)'; for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){ ctx.save(); ctx.translate(dx,dy); drawActor(a); ctx.restore(); } ctx.restore(); }
+function wallSign(x,y,w,h,txt,col,tcol='#fff',size=8){ w=Math.max(w,Math.ceil(txtW(txt,size))+12); /* M6: табличка не уже текста */ const sx=Math.round(x-G.cam); if(sx+w<-10||sx>W+10) return; ctx.fillStyle=P.ink; ctx.fillRect(sx-1,y-1,w+2,h+2); ctx.fillStyle=col; ctx.fillRect(sx,y,w,h); G.labels.push([txt,sx+w/2,y+h/2,size,tcol]); }
+function drawTripActors(list){ const fy=a=>a.ry!==undefined?a.ry:a.y, arr=[...list].sort((a,b)=>fy(a)-fy(b)||a.y-b.y); for(const a of arr){ if(a.hide) continue; const soft=a.inSoft&&a!==G.hero; if(soft) ctx.globalAlpha=.5; // V33-4: NPC в зоне джойстика/кнопок — полупрозрачный
+    if(a===G.hero){ ctx.save(); window.__silh=1; for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]]){ ctx.save(); ctx.translate(dx,dy); drawActor(a); ctx.restore(); } window.__silh=0; ctx.restore(); }
     drawActor(a); const sx=Math.round(a.x-G.cam), sy=Math.round(a.y-a.z);
-    if(a.bub>0&&a.bubS) G.labels.push([a.bubS,sx,sy-58,7,a.bubC||'#fff','center',P.ink]);
+    if(a.bub>0&&a.bubS&&sx>-4&&sx<W+4){ const bw6=txtW(a.bubS,7)/2+6, bx6=Math.round(Math.max(SA.l+bw6,Math.min(W-SA.r-bw6,sx))); a.bubX=bx6+G.cam; G.labels.push([a.bubS,bx6,sy-58,7,a.bubC||'#fff','center',P.ink]); } /* M6: реплики не обрезаются краем экрана */
     if(a.mark) { const bob=Math.round(Math.sin(G.t*6)*2); ctx.fillStyle=P.ink; ctx.fillRect(sx-4,sy-66+bob,9,9); ctx.fillStyle=a.mark; ctx.fillRect(sx-3,sy-65+bob,7,7); }
+    if(soft) ctx.globalAlpha=1;
   } }
 // мигающая стрелка-цель
-function goalArrow(x,y,col=P.neonLime){ const sx=Math.round(x-G.cam), b=Math.round(Math.sin(G.t*8)*2); if(sx<-10){ arrowEdge(4,y,-1,col); return; } if(sx>W+10){ arrowEdge(W-14,y,1,col); return; } ctx.fillStyle=P.ink; ctx.fillRect(sx-5,y-16+b,11,8); ctx.fillRect(sx-2,y-8+b,5,4); ctx.fillStyle=col; ctx.fillRect(sx-4,y-15+b,9,6); ctx.fillRect(sx-1,y-9+b,3,3); }
-function arrowEdge(x,y,d,col){ const b=Math.round(Math.sin(G.t*8)*2); ctx.fillStyle=P.ink; ctx.fillRect(x-1+b*d,y-6,12,12); ctx.fillStyle=col; for(let i=0;i<5;i++) ctx.fillRect(x+(d>0?i:4-i)+b*d,y-4+i,2,9-i*2); }
+function goalArrow(x,y,col=P.neonLime){ const sx=Math.round(x-G.cam+(G.layX||0)), b=Math.round(Math.sin(G.t*8)*2); if(sx<-10){ arrowEdge(4,y,-1,col); return; } if(sx>W+10){ arrowEdge(W-14,y,1,col); return; } (G.goals=G.goals||[]).push({x:sx-5,y:y-18,w:11,h:14}); ctx.fillStyle=P.ink; ctx.fillRect(sx-5,y-16+b,11,8); ctx.fillRect(sx-2,y-8+b,5,4); ctx.fillStyle=col; ctx.fillRect(sx-4,y-15+b,9,6); ctx.fillRect(sx-1,y-9+b,3,3); }
+function arrowEdge(x,y,d,col){ const b=Math.round(Math.sin(G.t*8)*2); (G.goals=G.goals||[]).push({x:x-3,y:y-6,w:16,h:12,edge:1}); ctx.fillStyle=P.ink; ctx.fillRect(x-1+b*d,y-6,12,12); ctx.fillStyle=col; for(let i=0;i<5;i++) ctx.fillRect(x+(d>0?i:4-i)+b*d,y-4+i,2,9-i*2); }
 function tripHUD(){ const L=SA.l+4, R=W-SA.r-4, T=SA.t+3, z=TR.z;
   // часы до 9:00
   const s=Math.ceil(TR.tLeft), mm=Math.floor(s/60), ss=String(s%60).padStart(2,'0'); const crit=TR.tLeft<15&&Math.floor(G.t*4)%2;
@@ -51,10 +52,10 @@ function tripHUD(){ const L=SA.l+4, R=W-SA.r-4, T=SA.t+3, z=TR.z;
   if(input.stick){ const s=input.stick; ctx.globalAlpha=.35; disc(ctx,s.x0,s.y0,18,18,'#fff'); ctx.globalAlpha=.7; disc(ctx,s.x,s.y,8,8,'#fff'); ctx.globalAlpha=1; }
   else if(G.time<5){ ctx.globalAlpha=.25+.1*Math.sin(G.t*4); disc(ctx,SA.l+40,H-SA.b-40,18,18,'#fff'); ctx.globalAlpha=1; G.labels.push(['веди пальцем',SA.l+40,H-SA.b-64,7,'#fff']); }
 }
-const ZONE_ICON={gate:'В',esc:'Э',passage:'П',plat:'Ж',car:'Ш',exitz:'⇧'};
+const ZONE_ICON={gate:'В',esc:'Э',passage:'П',plat:'Ж',car:'Ш',exitz:'⇧',xfer:'←'};
 function actBtn(label,x,y,w,h,col,id,pulse){ ctx.fillStyle=P.ink; ctx.fillRect(x-2,y-2,w+4,h+4); ctx.fillStyle=shade(col,-.35); ctx.fillRect(x,y+3,w,h-3); ctx.fillStyle=pulse?shade(col,.2):col; ctx.fillRect(x,y,w,h-4); ctx.fillStyle='#ffffff40'; ctx.fillRect(x+2,y+2,w-4,2);
   G.labels.push([label,x+w/2,y+h/2-1,8,'#fff']); buttons.push({x,y,w,h,id:'trip'+id,cb:()=>tripPress(id)}); }
-function drawTrip(){ G.labels=[]; buttons=[]; const z=TR.z; if(!z) return;
+function drawTrip(){ G.labels=[]; G.goals=[]; buttons=[]; const z=TR.z; if(!z) return;
   const shx=G.shake>0?Math.round(rnd(-G.shake,G.shake)):0; ctx.save(); ctx.translate(shx,0);
   ZONES[z.k].draw(z);
   drawParts(); ctx.restore(); vignette(); drawPops();

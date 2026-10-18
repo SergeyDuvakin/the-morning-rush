@@ -30,7 +30,7 @@ const _gtE=goalText; goalText=function(z){ if(z&&z.k==='gate'&&!z.passed&&z.inK<
     if(id==='token'){ tev('buy_token'); w.coins-=PRICE.token; w.tokens++; this.leaveK(z,'Жетон куплен!'); }
     else if(id==='pass'){ tev('buy_pass'); w.coins-=PRICE.pass; w.rides+=10; this.leaveK(z,'Проездной на 10 поездок!'); }
     else if(id==='unlim'){ tev('buy_unlim'); w.coins-=PRICE.unlim; w.unlim=mskDay(); this.leaveK(z,'Безлимит до полуночи!'); }
-    else if(id==='debt'){ tev('buy_debt'); w.tokens++; TR.tLeft-=15; pop('−15 с',h.x,h.y-56,P.red,9); this.leaveK(z,'Жетон в долг. Кассир вздыхает.'); } };
+    else if(id==='debt'){ tev('buy_debt'); w.tokens++; pop('−'+penalize(15,'debt')+' с',h.x,h.y-56,P.red,9); this.leaveK(z,'Жетон в долг. Кассир вздыхает.'); } };
   G0.bot=function(z){ if(z.kpanel){ const o=this.offers(), c=wallet().coins; const pick1=c>=40?'pass':c>=25&&Math.random()<.5&&o[2].ok?'unlim':c>=5?'token':'debt'; this.buy(z,pick1); return {x:G.hero.x,y:G.hero.y}; } return bot0(z); };
 })();
 function drawKassa(z){ const offs=ZONES.gate.offers(); G.labels.length=0; ctx.fillStyle='rgba(10,6,20,.66)'; ctx.fillRect(0,0,W,H); buttons.length=0;

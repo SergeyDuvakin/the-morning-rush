@@ -11,39 +11,22 @@ const tgv=v=>{try{return tg&&tg.isVersionAtLeast&&tg.isVersionAtLeast(v)}catch(e
 function tgInit(){ if(!tg) return;
   try{tg.ready();}catch(e){} try{tg.expand();}catch(e){}
   try{ if(tgv('8.0')&&tg.requestFullscreen&&!tg.isFullscreen) tg.requestFullscreen(); }catch(e){}
+  try{ if(tgv('8.0')&&tg.lockOrientation) tg.lockOrientation(); }catch(e){}
   try{ if(tgv('7.7')) tg.disableVerticalSwipes(); }catch(e){}
   try{ if(tgv('6.1')){tg.setHeaderColor('#1b1426');tg.setBackgroundColor('#1b1426');} }catch(e){}
   try{ if(tgv('6.1')) tg.BackButton.onClick(()=>window.onBack&&window.onBack()); }catch(e){}
 }
 function tgBack(show){ if(!inTG) return; try{ if(tgv('6.1')) show?tg.BackButton.show():tg.BackButton.hide(); }catch(e){} }
-function sensorLandscape(){
-  const o=window.orientation;
-  if(o===90||o===-90) return true;
-  if(o===0||o===180) return false;
-  try{ const t=(screen.orientation&&screen.orientation.type)||''; if(t.indexOf('landscape')>=0) return true; if(t.indexOf('portrait')>=0) return false; }catch(e){}
-  return null;
-}
-function layoutLandscape(){ return window.innerWidth>window.innerHeight*1.05; }
-function viewH(){ const c=[window.innerHeight]; if(tg){ c.push(tg.viewportHeight, tg.viewportStableHeight); }
-  const good=c.filter(v=>v&&isFinite(v)&&v>0); if(!good.length) return window.innerHeight||0;
-  if(layoutLandscape()){ const fit=good.filter(v=>v<window.innerWidth); if(fit.length) return Math.max(...fit); }
-  return Math.max(...good); }
-let orientLock=null;
-function syncOrientLock(){ if(!tg||!tgv('8.0')) return; const land=layoutLandscape(), want=land?'land':'open'; if(orientLock===want) return;
-  try{ if(land){ if(tg.lockOrientation) tg.lockOrientation(); if(tg.requestFullscreen&&!tg.isFullscreen) tg.requestFullscreen(); }
-    else if(tg.unlockOrientation) tg.unlockOrientation(); orientLock=want; }catch(e){ orientLock=null; } }
+// высота: максимум из innerHeight и обеих высот Telegram (нули/undefined игнорируем) — никогда только viewportStableHeight
+function viewH(){ const c=[window.innerHeight]; if(tg){ c.push(tg.viewportHeight, tg.viewportStableHeight); } return Math.max(...c.filter(v=>v&&isFinite(v)&&v>0)); }
 function cssInsets(){ const e=document.getElementById('sa'); if(!e) return {l:0,r:0,t:0,b:0}; const r=e.getBoundingClientRect();
   return {l:r.left,t:r.top,r:window.innerWidth-r.right,b:window.innerHeight-r.bottom}; }
 function tgInsets(){ const o={l:0,r:0,t:0,b:0}; if(!tg) return o; const a=tg.safeAreaInset||{}, b=tg.contentSafeAreaInset||{};
   o.l=(a.left||0)+(b.left||0); o.r=(a.right||0)+(b.right||0); o.t=(a.top||0)+(b.top||0); o.b=(a.bottom||0)+(b.bottom||0); return o; }
 function resize(){ const d0=window.devicePixelRatio||1, vw=window.innerWidth, vh=viewH();
   const ci=cssInsets(), ti=tgInsets(); const ins={l:Math.max(ci.l,ti.l),r:Math.max(ci.r,ti.r),t:Math.max(ci.t,ti.t),b:Math.max(ci.b,ti.b)};
-  const sens=sensorLandscape();
-  const key=vw+'x'+vh+'@'+d0+'|'+ins.l+','+ins.r+','+ins.t+','+ins.b+'|'+sens+'|'+window.innerWidth+'x'+window.innerHeight;
-  const wasPortrait=portrait;
-  portrait=!layoutLandscape();
-  if(inTG&&sens===true) portrait=false;
-  if(key===lastWH&&portrait===wasPortrait) return false; lastWH=key; DPR=d0;
+  const key=vw+'x'+vh+'@'+d0+'|'+ins.l+','+ins.r+','+ins.t+','+ins.b; if(key===lastWH) return false; lastWH=key; DPR=d0;
+  portrait=vh>vw*1.05;
   const dw=Math.round(vw*DPR), dh=Math.round(vh*DPR);
   SC=Math.max(1,Math.floor(dh/LH)); // целочисленный масштаб, ширина добирается фоном
   if(portrait) SC=Math.max(1,Math.floor(dw/LH));
@@ -51,19 +34,12 @@ function resize(){ const d0=window.devicePixelRatio||1, vw=window.innerWidth, vh
   cv.style.width=(W*SC/DPR)+'px'; cv.style.height=(H*SC/DPR)+'px';
   tcv.width=dw; tcv.height=dh; tcv.style.width=vw+'px'; tcv.style.height=vh+'px';
   const k=DPR/SC; SA.l=Math.ceil(ins.l*k); SA.r=Math.ceil(ins.r*k); SA.t=Math.ceil(ins.t*k); SA.b=Math.ceil(ins.b*k);
-  ctx.imageSmoothingEnabled=false; syncOrientLock(); return true; }
+  ctx.imageSmoothingEnabled=false; return true; }
 let onRescale=null;
-function rescale(){ const ch=resize(); if(ch&&onRescale) onRescale(); if(!layoutLandscape()) armTurn(); return ch; }
-let kickQueued=false;
-function kick(){ rescale(); if(kickQueued) return; kickQueued=true; for(const ms of [50,300,800]) setTimeout(rescale,ms); setTimeout(()=>{kickQueued=false;},800); }
-let turnTimer=0;
-function armTurn(){ if(turnTimer) return; turnTimer=setInterval(()=>{ rescale(); if(layoutLandscape()){ clearInterval(turnTimer); turnTimer=0; kick(); } },200); }
+function rescale(){ const ch=resize(); if(ch&&onRescale) onRescale(); return ch; }
 tgInit(); rescale();
-try{ if(tg&&tg.onEvent){ for(const ev of ['viewportChanged','fullscreenChanged','safeAreaChanged','contentSafeAreaChanged']) tg.onEvent(ev,kick); } }catch(e){}
-window.addEventListener('resize',kick); window.addEventListener('orientationchange',kick);
-try{ if(screen.orientation&&screen.orientation.addEventListener) screen.orientation.addEventListener('change',kick); }catch(e){}
-try{ if(window.visualViewport) visualViewport.addEventListener('resize',kick); }catch(e){}
-try{ const mq=window.matchMedia&&matchMedia('(orientation: landscape)'); if(mq&&mq.addEventListener) mq.addEventListener('change',kick); }catch(e){}
+try{ if(tg&&tg.onEvent){ for(const ev of ['viewportChanged','fullscreenChanged','safeAreaChanged','contentSafeAreaChanged']) tg.onEvent(ev,rescale); } }catch(e){}
+window.addEventListener('resize',rescale); window.addEventListener('orientationchange',()=>{rescale();setTimeout(rescale,300);});
 for(const ms of [50,300,800]) setTimeout(rescale,ms);
 
 // ---------- текст: отдельный слой в реальном разрешении экрана (чётко) ----------

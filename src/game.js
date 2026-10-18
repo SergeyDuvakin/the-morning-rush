@@ -149,7 +149,7 @@ function drawPause(){ G.labels.length=0; ctx.fillStyle='#120c18d0'; ctx.fillRect
     bigBtn(save.noHaptic?'ВИБРО: ВЫКЛ':'ВИБРО: ВКЛ',SA.l+16+tw,ty,tw,th,save.noHaptic?'#5a4a5a':'#3a7a5a',()=>{save.noHaptic=!save.noHaptic; store(); haptic('select');},'hapt',8); } }
 // ---------- титул ----------
 const TITLE={crowd:[]};
-function toTitle(){ G.scene='title'; tgBack(false); musTheme=3; musOn=true; floorBand(); TITLE.crowd=[]; const specs=[HERO_SPECS.serega,...['polite','aunt','musician','kid','bag','courier','seeds'].map(t=>EN[t].spec())]; for(let i=0;i<10;i++) TITLE.crowd.push({spec:specs[i%specs.length],x:i/10,ph:rnd(0,9),sp:rnd(.6,1.2)}); BG.lv={name:'Давка',line:0,bg:'station',len:9999}; bgReset(BG.lv); }
+function toTitle(){ G.scene='title'; tgBack(false); musTheme=3; musOn=true; floorBand(); TITLE.crowd=[]; const specs=[heroSpec('serega'),...['polite','aunt','musician','kid','bag','courier','seeds'].map(t=>EN[t].spec())]; for(let i=0;i<10;i++) TITLE.crowd.push({spec:specs[i%specs.length],x:i/10,ph:rnd(0,9),sp:rnd(.6,1.2)}); BG.lv={name:'Давка',line:0,bg:'station',len:9999}; bgReset(BG.lv); }
 function drawTitle(){ G.labels=[]; buttons=[]; BG.t+=0; drawBG(G.t*20); vignette();
   // толпа бежит
   const by=FY1; for(const c of TITLE.crowd.sort((a,b)=>a.ph-b.ph)){ const x=((c.x*W*1.4+G.t*24*c.sp)%(W*1.4))-W*.2; const img=personSprite(c.spec,'walk',Math.floor(G.t*10*c.sp+c.ph)%8,'norm',Math.floor(G.t*10)); const y=by-4-(c.ph%3)*5; ctx.drawImage(img,Math.round(x-32),Math.round(y-60)); }

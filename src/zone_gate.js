@@ -4,7 +4,7 @@ const PASS_T={tourist:3.2,granny:2.6,mom:2.2,aunt:1.8,bag:2,kid:.6,student:.9,co
 function qType(d){ return pick(['polite','student','aunt','bag','tourist','granny','mom','kid','courier','seeds','trainee'].slice(0,5+Math.min(6,Math.floor(d/2)))); }
 ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · ТУРНИКЕТЫ',
   tip:z=>!canPass()?'нет проезда — иди в КАССУ налево':'встань в очередь; «ВЛЕЗТЬ» рядом с зевакой',
-  init(z){ const W2=Math.max(W,470); z.len=W2; z.TX=Math.max(190,Math.min(W2-(z.detector?250:190),Math.round(W*.75)-(z.detector?190:140))); z.KX=70; z.inQ=null; z.inK=-1; z.passed=false; z.need=false; z.adv=0; z.cutBan=0; z.inviteT=6; z.invite=null; z.vendUsed=false; z.vendAte=false; z.passing=null; z.tbT=0;
+  init(z){ const W2=Math.max(W,470); z.len=W2; z.TX=Math.max(190,Math.min(W2-(z.detector?250:190),Math.round(W*.75)-(z.detector?190:140))); z.KX=70; z.inQ=null; z.inK=-1; z.passed=false; z.need=false; z.adv=0; z.cutBan=0; z.inviteT=6; z.invite=null; z.vendUsed=false; z.vendAte=false; z.passing=null; z.tbT=0; z.sepR=0;
     const n=z.lanes; z.L=[]; for(let i=0;i<n;i++){ const y=z.y0+16+(z.y1-z.y0-18)*(n===1?.5:i/(n-1)); z.L.push({y,q:[],gT:0,slow:1}); }
     for(let i=0;i<n-1;i++){ const ym=(z.L[i].y+z.L[i+1].y)/2; z.solids.push([z.TX-8,ym-2,z.TX+16,ym+2]); }
     // очереди
@@ -29,6 +29,8 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
       const f=l.q[0];
       if(f&&f!==h&&l.gT<=0&&Math.abs(f.x-this.slotX(z,0))<3&&(!z.turnboss||z.green)){ f.passingT=f.pass; l.gT=f.pass+.2; f.pin=false; f.ghost=true; f.noSolid=true; l.q.shift(); z.adv++; f.bub=0; }
     }
+    // v4 фикс: стоящий в очереди ПОЗАДИ героя (по порядку), но физически перед ним — пропускает насквозь (иначе герой упирается в «пиннутого» и ждёт сторожа)
+    if(z.inQ&&!z.passed){ const l=z.inQ, hi=l.q.indexOf(h); for(let j=0;j<l.q.length;j++){ const e=l.q[j]; if(e===h) continue; const blk=hi>=0&&j>hi&&e.x>h.x-4&&e.x<h.x+16&&Math.abs(e.y-h.y)<10; if(blk){ e.ghost=true; e.qGhost=true; } else if(e.qGhost){ e.ghost=false; e.qGhost=false; } } }
     for(const e of z.npcs){ if(e.passingT>0){ e.passingT-=dt; e.x+=(26/e.pass)*dt; e.set('walk'); e.face=1; if(e.passingT<=0){ e.after=true; } } else if(e.after){ if(walkTo(e,z.len+20,e.y,50,dt)||e.x>z.len-6){ e.gone=true; } }
       else if(e.joinL){ } else if(e.wander){ if(e.tx==null||walkTo(e,e.tx,e.ty,30,dt)) { e.tx=rnd(40,z.TX-30); e.ty=rnd(z.y0,z.y1); } } }
     z.npcs=z.npcs.filter(e=>!e.gone);
@@ -48,7 +50,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
           if(j===0&&!h.passing&&l.gT<=0&&Math.abs(h.x-this.slotX(z,0))<3){
             if(z.turnboss&&!z.green){ if(!z.slam){ tev('tb_slam'); z.slam=1; h.stun=.9; shake(3); pop('ХРЯСЬ! КРАСНЫЙ',h.x,h.y-52,P.red,8); SFX.hurt(); haptic('heavy'); } }
             else if(!canPass()){ l.q.splice(0,1); z.inQ=null; z.lockHero=false; h.pin=false; h.x-=26; tev('nopass'); z.need=true; say('НЕТ ПРОЕЗДНОГО! Иди в кассу ←',2.4,P.red); SFX.hurt(); haptic('error'); }
-            else { const t=usePass(); tev(t<1?'pass_card':'pass_token'); store(); h.passing=t; h.pass=t; h.noSolid=true; l.q.shift(); l.gT=t+.2; z.adv++; pop(t<1?'ПИК!':'ЖЕТОН!',h.x+14,h.y-46,P.neonLime,8); SFX.coin(); } }
+            else { const t=usePass(); tev(t<1?'pass_card':'pass_token'); store(); const gd=heroStats().gateDelay; if(gd) tev('gate_delay'); h.passing=t+gd; h.pass=t+gd; h.noSolid=true; l.q.shift(); l.gT=t+.2; z.adv++; pop(t<1?'ПИК!':'ЖЕТОН!',h.x+14,h.y-46,P.neonLime,8); SFX.coin(); } }
           if(!(z.turnboss&&!z.green)) z.slam=0; } } }
     if(z.invite){ z.invite.t-=dt; if(z.invite.t<=0||!z.inQ) z.invite=null; }
     if(h.passing){ z.lockHero=true; h.pin=false; h.x+=26/h.pass*dt; h.set('walk'); h.face=1; h.passing-=dt; if(h.passing<=0){ h.passing=0; z.passed=true; z.lockHero=false; z.inQ=null; } }
@@ -68,7 +70,7 @@ ZONES.gate={ title:z=>z.turnboss?'ТУРНИКЕТ-МУТАНТ':'ВХОД · Т
   near(z){ const h=G.hero; let best=null, bd=1e9; for(const l of z.L) l.q.forEach((e,j)=>{ if(e===h) return; const d=Math.hypot(e.x-h.x,(e.y-h.y)*2); if(d<22&&d<bd&&j<l.q.length){ bd=d; best={e,l,j}; } }); return best; },
   ctx(z){ const h=G.hero, w=wallet(); const r={};
     if(z.invite&&z.inQ) r.b={label:'ДА, СПАСИБО!',col:'#2aa860',fn:()=>{ const l=z.inQ, j=l.q.indexOf(h), e=z.invite.e, k=l.q.indexOf(e); if(j>0&&k>=0){ l.q.splice(j,1); l.q.splice(Math.max(1,k),0,h); TR.polite++; tev('invite'); pop('ВЕЖЛИВОСТЬ +20',h.x,h.y-56,P.neonLime,8); bubble(e,'Пожалуйста!',1); } z.invite=null; }};
-    else if(z.inK>0&&z.K[0]===h){ r.b={label:w.coins>=5?'ЖЕТОН · 5 мон.':'В ДОЛГ (−15 с)',col:'#d8a020',fn:()=>{ if(w.coins>=5){ tev('buy_token'); w.coins-=5; w.tokens++; } else { tev('buy_debt'); w.tokens++; TR.tLeft-=15; pop('−15 с',h.x,h.y-56,P.red,9); } this.leaveK(z,'Жетон куплен!'); }};
+    else if(z.inK>0&&z.K[0]===h){ r.b={label:w.coins>=5?'ЖЕТОН · 5 мон.':'В ДОЛГ (−15 с)',col:'#d8a020',fn:()=>{ if(w.coins>=5){ tev('buy_token'); w.coins-=5; w.tokens++; } else { tev('buy_debt'); w.tokens++; pop('−'+penalize(15,'debt')+' с',h.x,h.y-56,P.red,9); } this.leaveK(z,'Жетон куплен!'); }};
       if(w.coins>=40) r.a={label:'ПРОЕЗДНОЙ×10 · 40',col:'#2aa860',fn:()=>{ tev('buy_pass'); w.coins-=40; w.rides+=10; this.leaveK(z,'Проездной на 10 поездок!'); }};
       else if(w.coins>=25) r.a={label:'БЕЗЛИМИТ ДЕНЬ · 25',col:'#2aa860',fn:()=>{ tev('buy_unlim'); w.coins-=25; w.unlim=mskDay(); this.leaveK(z,'Безлимит до полуночи!'); }}; }
     else if(z.vend&&!z.vendUsed&&Math.abs(h.x-z.VX)<16&&h.y<z.y0+14&&!z.inQ){ if(z.vendAte) r.b={label:'ПНУТЬ АВТОМАТ',col:'#d8265e',fn:()=>{ tev('vend_kick'); shake(3); SFX.hit(); if(Math.random()<.5){ this.coffee(z); } else { pop('…',z.VX,z.y0-30,'#fff',9); z.vendUsed=true; say('Автомат победил. Монета не вернулась.',1.6,'#ccc'); } }};

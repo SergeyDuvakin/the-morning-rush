@@ -37,9 +37,9 @@ function drawActor(a,ex){ const fr=Math.floor(a.anT*10);
   else f=fr%6;
   const mood=(s==='ko'||s==='rail'||(s==='down'&&a.hp<=0))?'ko':(s==='hurt'||s==='fly'||s==='down')?'hurt':(a.angry||s==='atk'&&a!==G.hero)?'angry':a.mood;
   const img=personSprite(a.spec,pn,f,mood,Math.floor(G.t*10));
-  const sx=Math.round(a.x-G.cam), sy=Math.round(a.y-a.z);
+  const pr=G.scene==='trip'&&a.rx!==undefined, ax=pr?a.rx:a.x, ay=pr?a.ry:a.y; const sx=Math.round(ax-G.cam), sy=Math.round(ay-a.z);
   // тень
-  const dk=dS(depthK(a.y)); softShadow(sx,Math.round(a.y),(a.boss?16:10)*dk*Math.max(.5,1-a.z/90));
+  const dk=dS(depthK(ay)); softShadow(sx,Math.round(ay),(a.boss?16:10)*dk*Math.max(.5,1-a.z/90));
   if(sx<-40||sx>W+40) return;
   if(a.ko&&a.koT>1.2&&Math.floor(G.t*12)%2) return; // мигает перед исчезновением
   const flip=a.face<0, sq=a.sq, w=64*(2-sq)*(a.scale||1)*dk, h=64*sq*(a.scale||1)*dk;
