@@ -91,7 +91,7 @@ drawResult=function(){ G.labels=[]; buttons=[]; UX5.rects=[]; ux5ResBg(); const 
   else { head=w&&TR.wk?(TR.wk.sun?'ВОСКРЕСЕНЬЕ':'СУББОТА')+' — ВЫХОДНОЙ!':w?'УСПЕЛ! '+ux5Arrive():TR.reason==='depot'?'УЕХАЛ В ДЕПО':'ОПОЗДАЛ · 09:00'; hcol=w?UXC.green:UXC.red;
     rows=w?(typeof dayStats5==='function'?dayStats5():[['Очки',TR.score],['Запас',Math.round(TR.tLeft)+' с'],['В вагоне',TR.spotName],['Скандалы',TR.scandals],['Монеты','+'+TR.coinsGot]]):[['Где застрял',ZONES[TR.z.k].title(TR.z)],['Скандалы',TR.scandals],['Монеты','+'+(TR.coinsGot|0)]];
     const pts=tripPts(), nu=[...(TR.newSt||[]).map(s=>'станция «'+s+'»'),...(TR.newUnlocks||[])];
-    if(w&&nu.length) lines.push(['ОТКРЫТО: '+nu.slice(0,3).join(', ')+(nu.length>3?'…':''),'#1f8a4a']); else { const n=ST_THR.findIndex(t=>t>pts); if(n>0) lines.push(['до станции «'+LEVELS[n].name+'»: ещё '+(ST_THR[n]-pts)+' очк.','#5a4a6a']); }
+    if(w&&nu.length) lines.push(['ОТКРЫТО: '+nu.slice(0,3).join(', ')+(nu.length>3?'…':''),'#1f8a4a']); else { if(typeof rt41NextLine==='function'){ if(TR.mode==='trip') lines.push([rt41NextLine(),'#5a4a6a']); } else { const n=ST_THR.findIndex(t=>t>pts); if(n>0) lines.push(['до станции «'+LEVELS[n].name+'»: ещё '+(ST_THR[n]-pts)+' очк.','#5a4a6a']); } }
     if(TR.day){ const d=TR.day, tk=TR.task; lines.push([WD4[d.weekday]+' · '+DAYTYPE4[d.type].n+(tk?' · '+tk.n+(w?(TR.taskOk?' ✔ +'+(TR.taskCoins||TASK_COINS):' ✘'):''):''),w&&TR.taskOk?'#1f8a4a':'#5a4a6a']); }
     if(w&&TR.day&&typeof collLine5==='function') lines.push([collLine5(),TR.collNew?'#1f8a4a':'#7a6a9a']); }
   const two=rows.length>3, nr=two?Math.ceil(rows.length/2):rows.length, hh=22, sh=stars?24:0;
@@ -124,9 +124,9 @@ drawHeroes=function(){ G.labels=[]; buttons=[]; HS.rects=[]; const L=SA.l+8, R=W
   let lab, col=UXC.green, cb;
   if(st.own){ lab='ИГРАТЬ ▶'; cb=()=>{ heroPick(sel); closeHeroes(); if(typeof map4Go==='function') map4Go(); }; }
   else if(st.price&&st.can){ lab='КУПИТЬ · '+st.price+' ◎'; col='#d8a020'; cb=()=>{ heroBuy(sel); }; }
-  else if(st.price){ lab='КУПИТЬ · '+st.price+' ◎'; col='#6a5a3a'; cb=()=>{ say('Не хватает монет: нужно '+st.price+', у тебя '+wallet().coins+(st.st>0&&LEVELS[st.st]?' · или открой станцию «'+LEVELS[st.st].name+'»':''),2.4,'#ffd23f'); SFX.hurt&&SFX.hurt(); }; }
+  else if(st.price){ lab='КУПИТЬ · '+st.price+' ◎'; col='#6a5a3a'; cb=()=>{ say('Не хватает монет: нужно '+st.price+', у тебя '+wallet().coins+(st.st>0&&ST_THR[st.st]?' · или набери '+ST_THR[st.st]+' очк. за поездки (у тебя '+tripPts()+')':''),2.4,'#ffd23f'); SFX.hurt&&SFX.hurt(); }; }
   else if(st.why==='weekend'){ lab='ОТКРОЕТСЯ В ВЫХОДНОЙ'; col='#5a5468'; cb=()=>{ say('Тимоха приходит, когда выпадет выходной — пройди его!',2.4,'#ffd23f'); }; }
-  else { lab='ОТКРОЕТСЯ НА СТ. '+(st.st+1); col='#5a5468'; cb=()=>{ say('Откроется на станции «'+LEVELS[st.st].name+'»',2.2,'#ffd23f'); }; }
+  else { lab='ЗА '+ST_THR[st.st]+' ОЧК.'; col='#5a5468'; cb=()=>{ say('Откроется, когда наберёшь '+ST_THR[st.st]+' очк. за поездки · у тебя '+tripPts(),2.2,'#ffd23f'); }; }
   bigBtn(lab,R-bwM,by,bwM,bh,col,cb,'hmain',lab.length>16?8:10); if(!st.own&&!(st.price&&st.can)) buttons[buttons.length-1].dis=true;
   // кошелёк — в промежутке между кнопками
   const wt=wallet().coins+' ◎', wtw=txtW(wt,9); if(R-bwM-L-bwB>wtw+24){ G.labels.push([wt,(L+bwB+R-bwM)/2,by+bh/2,9,'#ffd23f','center']); rect((L+bwB+R-bwM)/2-wtw/2,by+bh/2-7,wtw,14,'wallet'); }
@@ -147,7 +147,7 @@ drawHeroes=function(){ G.labels=[]; buttons=[]; HS.rects=[]; const L=SA.l+8, R=W
   const st3=ux5Stat(sel), lw=Math.max(...st3.map(s=>txtW(s[0],7)))+10, barH=6, rowH=13;
   if(y+3*rowH<=tilesY-4){ for(const [nm,v] of st3){ G.labels.push([nm,tx,y+3,7,'#c8c0e0','left']); const bx=tx+lw, bw=tw-lw; ctx.fillStyle=UXC.ink; ctx.fillRect(bx-1,y-1,bw+2,barH+2); ctx.fillStyle='#2a2448'; ctx.fillRect(bx,y,bw,barH); ctx.fillStyle='#ffc21f'; ctx.fillRect(bx,y,Math.round(bw*clamp(v,.08,1)),barH-1); rect(tx,y-3,tw,barH+4,'bar'+nm); y+=rowH; } }
   else if(!st.own&&st.st>0&&LEVELS[st.st]){ }
-  if(!st.own&&st.st>0&&LEVELS[st.st]&&y+10<tilesY-2){ const t2=ux5Fit((st.price?'или ':'')+'станция «'+LEVELS[st.st].name+'»: ещё '+Math.max(0,ST_THR[st.st]-tripPts())+' очк.',7,tw); G.labels.push([t2,tx,y+4,7,'#ffd23f','left']); rect(tx,y-1,txtW(t2,7),10,'hint'); }
+  if(!st.own&&st.st>0&&LEVELS[st.st]&&y+10<tilesY-2){ const t2=ux5Fit((st.price?'или ':'')+'за очки поездок: ещё '+Math.max(0,ST_THR[st.st]-tripPts())+' очк.',7,tw); G.labels.push([t2,tx,y+4,7,'#ffd23f','left']); rect(tx,y-1,txtW(t2,7),10,'hint'); }
   HS.off=Math.max(0,Math.min(n-vis,HS.off)); const x0=scroll?tx+16:tx;
   if(scroll){ const ar=(x,d,id)=>{ ctx.fillStyle=UXC.ink; ctx.fillRect(x,tilesY,14,tileS); ctx.fillStyle='#3a3050'; ctx.fillRect(x+1,tilesY+1,12,tileS-2); ctx.fillStyle='#fff'; for(let i=0;i<4;i++){ const xx=d<0?x+4+i:x+9-i; ctx.fillRect(xx,tilesY+tileS/2-i,1,i*2+1); } buttons.push({x,y:tilesY,w:14,h:tileS,id,icon:1,cb:()=>{ HS.off+=d; SFX.ui(); }}); rect(x,tilesY,14,tileS,id); };
     if(HS.off>0) ar(tx,-1,'hl'); if(HS.off<n-vis) ar(R-14,1,'hr'); }

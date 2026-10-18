@@ -23,7 +23,7 @@ function drawHeroes(){ G.labels=[]; buttons=[]; HS.rects=[]; const L=SA.l+6, R=W
   let lab, col='#2aa860', cb;
   if(st.own){ lab='ИГРАТЬ'; cb=()=>{ heroPick(sel); closeHeroes(); if(typeof map4Go==='function') map4Go(); }; }
   else if(st.price&&st.can){ lab='КУПИТЬ · '+st.price+' мон.'; col='#d8a020'; cb=()=>{ heroBuy(sel); }; }
-  else if(st.price){ lab='КУПИТЬ · '+st.price+' мон.'; col='#6a5a3a'; cb=()=>{ say('Не хватает монет: нужно '+st.price+', у тебя '+wallet().coins+(st.st>0&&LEVELS[st.st]?' · или открой станцию «'+LEVELS[st.st].name+'»':''),2.4,'#ffd23f'); SFX.hurt&&SFX.hurt(); }; }
+  else if(st.price){ lab='КУПИТЬ · '+st.price+' мон.'; col='#6a5a3a'; cb=()=>{ say('Не хватает монет: нужно '+st.price+', у тебя '+wallet().coins+(st.st>0&&ST_THR[st.st]?' · или набери '+ST_THR[st.st]+' очк. за поездки (у тебя '+tripPts()+')':''),2.4,'#ffd23f'); SFX.hurt&&SFX.hurt(); }; }
   else if(st.why==='weekend'){ lab='ОТКРОЕТСЯ В ВЫХОДНОЙ'; col='#5a5468'; cb=()=>{ say('Тимоха приходит, когда выпадет выходной — пройди его!',2.4,'#ffd23f'); }; }
   else { lab='ОТКРОЕТСЯ НА СТ. '+(st.st+1); col='#5a5468'; cb=()=>{ say(st.price?'Не хватает монет: нужно '+st.price+' мон.':'Откроется на станции «'+LEVELS[st.st].name+'»',2.2,'#ffd23f'); }; }
   bigBtn(lab,R-bw,by,bw,bh,col,cb,'hmain',lab.length>16?8:10); if(!st.own&&!(st.price&&st.can)) buttons[buttons.length-1].dis=true;

@@ -8,7 +8,7 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
     const nl=z.mode==='stairs'?3+Math.min(4,d>>2):1+Math.min(4,d>>2); for(let i=0;i<nl;i++){ const s=rnd(4,z.N-3); if(z.ppl.some(p=>p.lane===0&&Math.abs(p.s-s)<2.5)) continue; z.ppl.push({lane:0,s,a:mkNpc(z.mode==='stairs'?'granny':qType(d),0,0),stand:true,v:0,blk:true}); }
     for(let i=0;i<2;i++) z.ppl.push({lane:0,s:rnd(-6,-1),a:mkNpc('courier',0,0),stand:false,v:2.4});
     for(const p of z.ppl){ p.a.face=1; p.a.pin=true; } z.y0=0; z.y1=H; },
-  pos(z,s,lane){ const k=s/z.N; return {x:70+k*(W-250)+(lane===0?-6:6), y:40+k*(H-96)+(lane===0?-8:6)}; },
+  pos(z,s,lane){ const k=s/z.N, x0=SA.l+130, y0=SA.t+92, x1=W-SA.r-190, y1=H-SA.b-50; return {x:x0+k*(x1-x0)+(lane===0?-6:6), y:y0+k*(y1-y0)+(lane===0?-8:6)}; }, // FB6: верх лестницы ниже/правее часов, низ — левее кнопок
   ahead(z,lane,s){ let b=null; for(const p of z.ppl) if(p.lane===lane&&p.s>s&&(!b||p.s<b.s)) b=p; return b; },
   update(z,dt){ const h=G.hero; z.tapT-=dt; const st=stickVec();
     // смена ряда
@@ -29,7 +29,7 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
   step(z){ const h=G.hero; if(z.tapT>0) return; z.tapT=.14; const b=this.ahead(z,z.lane,z.s);
     if(z.lane===1&&z.mode!=='stairs'){ if(b&&b.s-z.s<1.6){ bubble(b.a,pick(['Не толкайтесь!','Стойте справа!','Куда торопимся?']),1.2); TR.scandal+=4; return; } }
     if(b&&b.s-z.s<1.3){ if(b.blk&&!b.leaveT){ bubble(b.a,pick(['Я тут стою.','Мне тоже на работу.','…']),1.1); } return; }
-    z.s+=(z.mode==='stairs'?heroStats().stairsMul:1); z.hop=1; tev(z.mode==='stairs'?'stairs_step':'esc_step'); const nn=[0,2,4,5,7,9,11]; tone(mtof(72+nn[Math.floor(z.s)%7]),.06,'square',.1); },
+    z.s+=(z.mode==='stairs'?heroStats().stairsMul:1); z.hop=1; tev(z.mode==='stairs'?'stairs_step':'esc_step'); const nn=[0,2,4,7,9]; if(!(G.t<(z.toneT||0))){ z.toneT=G.t+.16; tone(mtof(60+nn[Math.floor(z.s)%5]),.05,'triangle',.045); } }, // FB6: мягкий шаг (треугольник, октавой ниже, ≤6/с)
   swap(z){ const want=1-z.lane, h=G.hero; if(!z.ppl.some(p=>p.lane===want&&Math.abs(p.s-z.s)<1.1)){ z.lane=want; z.swT=.3; tev('esc_switch'); SFX.ui(); } else pop('некуда!',h.x,h.y-50,'#ccc',7); },
   ctx(z){ const r={}; const b=this.ahead(z,z.lane,z.s);
     r.b={label:z.mode==='stairs'?'ШАГ':z.lane===0?'ИДТИ СЛЕВА':'ТОРОПИТЬСЯ',col:'#3a6ad8',fn:()=>this.step(z)};
@@ -51,8 +51,11 @@ ZONES.esc={ title:z=>z.mode==='stairs'?'ЭСКАЛАТОР СЛОМАН — ЛЕ
     const off=z.mode==='stairs'?0:(BG.t*z.belt)%1; for(let s=-3;s<z.N+3;s++){ const p=this.pos(z,s+off,0), q=this.pos(z,s+off,1); ctx.fillStyle='#2a2430'; ctx.fillRect(Math.round(p.x-6),Math.round(p.y+2),Math.round(q.x-p.x+14),1); }
     // торшеры
     for(let s=0;s<z.N;s+=5){ const p=this.pos(z,s+(z.mode==='stairs'?0:(BG.t*z.belt)%5)-2.5,0); const x=Math.round(p.x-2), y=Math.round(p.y-30); ctx.fillStyle=P.ink; ctx.fillRect(x,y,3,18); ctx.fillStyle=P.lampHot; ctx.fillRect(x-2,y-4,7,5); ctx.fillStyle='rgba(255,240,180,.08)'; ctx.fillRect(x-10,y-10,23,20); }
-    G.labels.push([z.mode==='stairs'?'СТОЙ — НЕ СТОЙ, ИДИ ПЕШКОМ':'СТОЙТЕ СПРАВА · ПРОХОДИТЕ СЛЕВА',W*.62,44,7,'#ffd23f']);
-    if(z.mode==='stairs') G.labels.push(['ЭСКАЛАТОР НА РЕМОНТЕ',W*.3,H-30,7,P.red]);
+    // FB6: табличка зоны — под строкой цели и шкалой скандала (ряд 2 HUD), на своей плашке; «на ремонте» — сверху той же таблички, не у джойстика
+    { const T=SA.t+3, lines=z.mode==='stairs'?[['ЭСКАЛАТОР НА РЕМОНТЕ','#ff6a5a'],['СТОЙ — НЕ СТОЙ, ИДИ ПЕШКОМ','#ffd23f']]:[['СТОЙТЕ СПРАВА · ПРОХОДИТЕ СЛЕВА','#ffd23f']], lh=11, pw=Math.max(...lines.map(l=>txtW(l[0],7)))+14, ph=lines.length*lh+5;
+      let cx=W/2, y0=T+53; try{ if(typeof UX5!=='undefined'&&UX5.toast&&typeof ux5ToastRect==='function'){ const tr=ux5ToastRect(); if(cx+pw/2+8>tr.x) cx=Math.max(SA.l+96+pw/2,tr.x-8-pw/2); } }catch(e){} { const hs=TR.hudScr; if(hs&&TR.route&&cx-pw/2<hs.x+hs.w+4&&y0-lh/2-3<hs.y+hs.h+3) y0=Math.ceil(hs.y+hs.h+3+lh/2+3); }
+      ctx.fillStyle='#120c18e8'; ctx.fillRect(Math.round(cx-pw/2),y0-lh/2-3,Math.round(pw),ph); ctx.fillStyle=lines.length>1?'#ff6a5a':'#ffd23f'; ctx.fillRect(Math.round(cx-pw/2),y0-lh/2-3,Math.round(pw),1);
+      lines.forEach((l,i)=>G.labels.push([l[0],cx,y0+i*lh,7,l[1]])); z.signRect={x:Math.round(cx-pw/2),y:y0-lh/2-3,w:Math.round(pw),h:ph}; }
     const acts=[]; for(const p of z.ppl){ const q=this.pos(z,p.s,p.lane); p.a.x=q.x+G.cam; p.a.y=q.y; p.a.set(p.v?'walk':'idle'); p.a.anT+=1/60; acts.push(p.a); }
     const sv=[FY0,FY1]; FY0=0; FY1=H*2.2; drawTripActors([G.hero,...acts]); FY0=sv[0]; FY1=sv[1];
     const nb=this.ahead(z,z.lane,z.s); if(nb&&nb.blk&&nb.s-z.s<2) nb.a.mark=P.red; for(const p of z.ppl) if(p!==nb) p.a.mark=null;

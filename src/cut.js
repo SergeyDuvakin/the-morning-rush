@@ -28,7 +28,7 @@ const CUTS={
     disc(ctx,ax,ay,8,8,P.ink); disc(ctx,ax,ay,7,7,P.red); disc(ctx,ax,ay,5,5,'#fff'); ctx.fillStyle=P.ink; ctx.fillRect(ax,ay-4,1,4); ctx.fillRect(ax,ay,3,1);
     G.labels.push([t<4.6?'08:47':'08:52',ax,ay-16,8,t<4.6?P.red:'#ff3a3a']); if(ring&&Math.floor(t*8)%2) G.labels.push(['ДЗЫНЬ!',ax+20,ay-24,10,P.edge]);
     if(t>1&&t<1.05) SFX.alarm();
-    if(t<4.5){ spr(S,'down',0,t>3.2&&t<4.5?'hurt':'ko',W*.36,by-14,false); if(t>3.3&&t<3.9) G.labels.push(['*шлёп*',W*.42,by-40,8,'#fff']); if(t<3) G.labels.push(['z z z',W*.3,by-40-Math.sin(t*3)*3,9,'#aaf']); sub(t<3?'Понедельник. Будильник 08:47…':'…бьёт будильник. Будильник бьёт сильнее.'); }
+    if(t<4.5){ ctx.fillStyle=P.ink; ctx.fillRect(W*.2+2,by-27,Math.round(W*.07)+2,9); ctx.fillStyle='#fff'; ctx.fillRect(W*.2+3,by-26,Math.round(W*.07),7); if(typeof fb6Lie==='function') FB6.lieIntro=fb6Lie(S,W*.2+5,by-20,1,'#7a5ad8',W*.2,W*.36); else spr(S,'down',0,t>3.2&&t<4.5?'hurt':'ko',W*.36,by-14,false); if(t>3.3&&t<3.9) G.labels.push(['*шлёп*',W*.42,by-40,8,'#fff']); if(t<3) G.labels.push(['z z z',W*.3,by-40-Math.sin(t*3)*3,9,'#aaf']); sub(t<3?'Понедельник. Будильник 08:47…':'…бьёт будильник. Будильник бьёт сильнее.'); }
     else if(t<6.5){ const k=ease((t-4.5)/.4); ctx.fillStyle='#0008'; ctx.fillRect(0,0,W,H); disc(ctx,W/2,H/2,40*k,30*k,P.white); disc(ctx,W/2+6,H/2+3,10*k,10*k,P.ink); sub('08:52?!','#ff4a4a'); if(t<4.6) SFX.hurt(); }
     else if(t<10){ const k=(t-6.5)/3.5; const poses=['hurt','jump','p3','dash','super','jump']; const p=poses[Math.floor(k*12)%poses.length]; spr(S,p,Math.floor(t*8)%2,'angry',W*.5+Math.sin(t*20)*14,by-2,Math.floor(t*6)%2===0,1.2);
       if(k>.3){ const hx2=W*.5+Math.sin(t*20)*14; const sy=by-SOCK_Y; ctx.fillStyle=P.ink; ctx.fillRect(hx2-7,sy-1,14,7); ctx.fillRect(hx2+5,sy-5,6,8); ctx.fillStyle='#fff'; ctx.fillRect(hx2-6,sy,12,5); ctx.fillRect(hx2+6,sy-4,4,7); ctx.fillStyle=P.red; ctx.fillRect(hx2-6,sy+3,12,1); ctx.fillRect(hx2+6,sy-4,4,1); G.labels.push(['носок на голове',W*.5,sy-12,7,'#fff']); }
@@ -65,7 +65,7 @@ const CUTS={
     G.labels.push(['СТАНЦИЯ ПРОЙДЕНА!',W/2,H*.25,16*ease(t*2),P.edge]); sub(gags[c.g]); }},
   lose:{len:4,start:c=>{ c.g=Math.floor(Math.random()*3); SFX.ko(); },draw:(t,c)=>{ drawPlay(); G.labels.length=0; buttons=[]; ctx.fillStyle='#000a'; ctx.fillRect(0,0,W,H);
     const gags=['Тебя увезли в депо. Там тепло, но далеко от офиса.','Толпа вынесла тебя на поверхность. Не той станции.','Ты уснул и уехал по кольцу. Дважды.'];
-    G.labels.push(['ОПОЗДАЛ…',W/2,H*.3,18,'#ff6a6a']); sub(gags[c.g]); spr(heroSpec(heroId),'down',0,'ko',W/2,H*.62,false,1.3); G.labels.push(['ну и ладно',W/2,H*.62-30,9,'#fff']); }},
+    G.labels.push(['ОПОЗДАЛ…',W/2,H*.3,18,'#ff6a6a']); sub(gags[c.g]); const ly=Math.round((FY0+FY1)/2); spr(heroSpec(heroId),'down',0,'ko',W/2,ly+4,false,1.3); G.labels.push(['ну и ладно',W/2,ly-40,9,'#fff']); }},
   unlock:{len:6,draw:t=>{ ctx.fillStyle='#2a1d33'; ctx.fillRect(0,0,W,H); const k=ease(t/1.2); ctx.fillStyle='#d9d2c0'; ctx.fillRect(W/2-60,H*.2,120*k,H*.55);
     spr(heroSpec('baba'),t<2?'walk':'cheer',Math.floor(t*8)%8,'norm',W/2-40+Math.min(40,t*30),H*.78,false,1.5);
     if(t>2){ G.labels.push(['НОВЫЙ ГЕРОЙ!',W/2,H*.15,14,P.edge]); G.labels.push(['БАБКА ЗИНАИДА',W/2,H*.86,12,P.neonPink]); sub('«Сынок, я сама пройду. Через тебя.»'); } }},

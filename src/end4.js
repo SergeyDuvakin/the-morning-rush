@@ -35,7 +35,7 @@ function e4Begin(opt){ opt=opt||{}; const k=Math.max(1,Math.floor(H/120)), SW=Ma
   for(let r=1;r<N;r++){ const y=Math.round(BY+(SH-BY)*Math.pow(r/N,1/.75)); e4r(E4C.seam,0,y,SW,1); }
   e4r('rgba(10,6,20,.18)',0,BY+1,SW,3);
   // open-space: дальний ряд — сотрудники за перегородками, мониторы, кулер, растение
-  const others=HERO_IDS4.filter(i=>i!==heroId), seats=[[.32,0],[.6,1],[.74,2]].filter(q=>!(opt.noBack&&q[1]===opt.noBack));
+  const others=HERO_IDS4.filter(i=>i!==heroId&&i!=='baba'), seats=[[.32,0],[.6,1],[.74,2]].filter(q=>!(opt.noBack&&q[1]===opt.noBack));
   for(const [fx,i] of seats){ const x=Math.round(SW*fx); e4r(P.ink,x+9,BY-9,15,11); e4r('#8a92a2',x+10,BY-8,13,9); e4r('#6a7282',x+11,BY-7,11,7); e4r(P.ink,x+15,BY+1,3,3);
     const sp=heroSpec(others[(i*3+(G.day||0))%others.length]); spr(sp,'sit',0,'norm',x,BY+6,i===1,1); }
   { const pts=[[Math.round(SW*.24),Math.round(SW*.44)],[Math.round(SW*.5),Math.round(SW*.84)]]; for(const [a,b] of pts){ e4r(P.ink,a-1,BY+3,b-a+2,10); e4r(E4C.part,a,BY+4,b-a,8); e4r(E4C.partHi,a,BY+4,b-a,2); e4r(E4C.partSh,a,BY+10,b-a,2); for(let x=a+22;x<b-4;x+=24) e4r(E4C.partSh,x,BY+6,1,4); } }

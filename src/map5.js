@@ -98,7 +98,17 @@ function m5Sticker(cx,cy,k){ disc(ctx,cx,cy,7*k,7*k,P.ink); disc(ctx,cx,cy,6*k,6
   ctx.fillStyle='#c8c4d0'; ctx.fillRect(cx+2*k,cy-6*k,k,k); ctx.fillRect(cx+3*k,cy-5*k,k,k); ctx.fillRect(cx+4*k,cy-4*k,k,k); ctx.fillStyle='#18162a'; ctx.fillRect(cx+5*k,cy+3*k,2*k,2*k); }
 // ---------- LED-ряд ----------
 function m5Tip(){ return !(save.cut&&save.cut.map5tip)&&tripPts()===0; }
-function m5GoBtn(Y){ const {k,R,by,bh,dx1}=Y, x0=dx1+6*k, aw=R-x0, bw=Math.min(aw-10*k,110*k), bhh=Math.min(30*k,bh-12*k), tip=m5Tip(), bx=Math.round(x0+(aw-bw)/2), byy=Math.round(tip?by+bh-bhh-3*k:by+(bh-bhh)/2), calm=m5Calm();
+function m5GoBtn(Y){ const {k,R,by,bh,dx1}=Y, x0=dx1+6*k, aw=R-x0, bw=Math.min(aw-10*k,110*k), tip0=m5Tip(), calm=m5Calm();
+  // FB6: «задача дня» над кнопкой — одна строка, что делать сейчас
+  const RT=MAP5.rt, res0=segResumable(), cw=Math.min(aw-6*k,150*k), lines=MAP5.sheet?[]:RT&&RT.wk?['ВЫХОДНОЙ','погуляй без спешки']:RT&&RT.endName?(typeof m5GoalTxt==='function'&&m5GoalTxt(RT,res0))||[res0?'ПРОДОЛЖИ ПОЕЗДКУ':'ЗАДАЧА ДНЯ',(RT.endT==='office'?'доедь до ОФИСА':'доедь до «'+RT.endName+'»')+' к 09:00']:[];
+  const two=bh>=58*k, calH=!lines.length?0:two?25*k:13*k, bhh=Math.min(30*k,bh-12*k-calH), bx=Math.round(x0+(aw-bw)/2), byy=Math.round(calH?by+bh-bhh-4*k:tip0?by+bh-bhh-3*k:by+(bh-bhh)/2);
+  const tip=tip0&&byy-by-calH>=20*k;
+  if(calH){ const cx=Math.round(x0+aw/2), cy=Math.round(by+Math.max(3*k,(byy-by-calH-(tip?17*k:6*k))/2)), cxL=cx-Math.round(cw/2);
+    ctx.fillStyle=P.ink; ctx.fillRect(cxL-k,cy-k,cw+2*k,calH+2*k); ctx.fillStyle='#241a34'; ctx.fillRect(cxL,cy,cw,calH); ctx.fillStyle='#3cdc64'; ctx.fillRect(cxL,cy,2*k,calH);
+    const fitS=(t,f,mw)=>{ while(txtW(t,f)>mw&&f>6.5) f-=.5; while(txtW(t,f)>mw&&t.length>6) t=t.replace(/(.)…?»/,'…»').replace(/^(.*)(.)…»/,'$1…»'); return [t,f]; };
+    if(two){ const [t1,f1]=fitS(lines[0],Math.max(7,6.5*k),cw-10*k), [t2,f2]=fitS(lines[1],Math.max(8,7.5*k),cw-10*k); const gk=tip0&&!tip?'tip':'goal'; m5Lab(t1,cxL+6*k,cy+7*k,f1,'#ffd23f','left',gk); m5Lab(t2,cxL+6*k,cy+17*k,f2,'#fff','left',gk); }
+    else { const [t2,f2]=fitS(lines[1],Math.max(7.5,7*k),cw-10*k); m5Lab(t2,cxL+6*k,cy+calH/2,f2,'#fff','left',tip0&&!tip?'tip':'goal'); }
+    MAP5.goal={x:cxL-k,y:cy-k,w:cw+2*k,h:calH+2*k,lines}; } else MAP5.goal=null;
   const res=segResumable(), lab=res?'ПРОДОЛЖИТЬ ▶':'ПОЕХАЛИ ▶'; let f=Math.max(9,8.5*k); while(txtW(lab,f)>bw-8*k&&f>7) f-=.5;
   const a=calm?.28:.2+.16*Math.sin(G.t*4); ctx.fillStyle='rgba(110,255,140,'+a.toFixed(3)+')'; ctx.fillRect(bx-5*k,byy-5*k,bw+10*k,bhh+10*k); ctx.fillStyle='rgba(110,255,140,'+(a*.6).toFixed(3)+')'; ctx.fillRect(bx-8*k,byy-3*k,bw+16*k,bhh+6*k);
   bigBtn(lab,bx,byy,bw,bhh,'#2aa860',()=>m5Go(),'go',f); m5Reg('go',bx-2,byy-2,bw+4,bhh+4);
@@ -134,7 +144,7 @@ function m5Layout(kind){ const k=map5K(), L=SA.l+4*k, R=W-SA.r-4*k, T=SA.t+3*k, 
   const ledHD=D.dp*10+D.dp2*8+D.dp*2, ledH=Math.ceil(ledHD/SC), ms=Math.max(ledH,Math.ceil(28*DPR/SC));
   const cw=Math.ceil(((led5Cols('88:88').length+3)*D.dp)/SC), gw=8*k, gx=L+cw+3*k, nx=gx+gw+3*k, nw=R-ms-4*k-nx;
   const py=T+ledH+5*k, rem=B-py, hs=11*k, blk=kind==='fork'?{xl:98,big:84,cmp:74}:kind==='wk'?{xl:64,big:58,cmp:50}:{xl:62,big:54,cmp:47};
-  let lv='cmp'; for(const l of ['xl','big']){ if(rem-(hs+(blk[l]+6)*k)-6*k>=(l==='xl'?54:46)*k){ lv=l; break; } } const big=lv!=='cmp', need=hs+(blk[lv]+6)*k;
+  let lv='cmp'; for(const l of ['xl','big']){ if(rem-(hs+(blk[l]+6)*k)-6*k>=(l==='xl'?54:46)*k){ lv=l; break; } } const big=lv!=='cmp', ex=(kind!=='sheet'&&typeof R41!=='undefined'&&R41.layEx)||0, need=hs+(blk[lv]+6+ex)*k;
   let bh=clamp(rem-need-6*k,44*k,80*k), ph=rem-bh-6*k;
   const by=py+ph+6*k, narrow=(R-L)/k<360, dw=(narrow?30:40)*k, dx0=Math.round((L+R)/2-dw+ (narrow?6*k:10*k)), dx1=dx0+2*dw;
   return {k,p:k+1,L,R,T,B,D,ledH,ms,cw,gx,gw,nx,nw,py,ph,bh,by,dw,dx0,dx1,narrow,hs,big,lv}; }
@@ -208,37 +218,43 @@ function m5States(N,plan){ const ss=m5Start(plan), ord=s=>M5_ORD.indexOf(s); let
   const st0=N[0].skip?N.findIndex(n=>n.board):0; return N.map((n,i)=>n.t==='bc'&&n.lock?'lock':n.skip?'skip':i===st0?'cur':'next'); }
 function m5DrawRoute(Y,sy,day,plan,idx,RT,pl){ const {k,L,R,py,ph,hs}=Y, y0=py+sy, N=RT.N, wl=Math.floor(idx/8), lc=LINE_COL[wl], pts=tripPts(), D=m5Dims(k,Y.big,Y.lv), pad=m5Pad(k);
   // шапка: бейдж линии (тап — схема), заголовок, легенда
-  const hy=pl.iy+Math.round((hs-3*k)/2); m5LineBadge(pl.ix+pad+3*k,hy,k,wl,Math.round(3.5*k)); m5Reg('badge',pl.ix+pad-2*k,hy-5*k,11*k,10*k);
+  const hy=pl.iy+Math.round((hs-3*k)/2), R41r=m5R41(plan); if(R41r) m5RouteBadge(pl.ix+pad+3*k,hy,k,R41r.id,Math.round(3.5*k)); else m5LineBadge(pl.ix+pad+3*k,hy,k,wl,Math.round(3.5*k)); m5Reg('badge',pl.ix+pad-2*k,hy-5*k,11*k,10*k);
   ctx.fillStyle=P.ink; const chx=pl.ix+pad+10*k; ctx.fillRect(chx,hy-k,3*k,k); ctx.fillRect(chx+k,hy,k,k); // ▾
-  const hb=Math.max(28*DPR/SC,hs); buttons.push({x:pl.ix,y:y0,w:Math.min(48,Math.max(hb,16*k)),h:Math.max(hb,hs+2*k),id:'line',cb:()=>{ m5Sheet(true); SFX.ui(); }});
-  const tfs=m5fs(11,k), title=plan.wk?'ВЫХОДНОЙ МАРШРУТ':'МАРШРУТ ДНЯ'; m5Lab(title,chx+6*k,hy,tfs,'#5a4a6a','left','hdr');
-  { const items=[['c','метро']]; if(RT.x) items.push([RT.x.id==='mck'?'sq':'tri',RT.x.id==='mck'?'МЦК':'МЦД']); if(N.some(n=>n.t==='bc'&&n.lock)||RT.G.some(g=>g.seg&&g.seg.locked)) items.push(['lock','закрыто']);
+  const hb=Math.max(28*DPR/SC,hs); buttons.push({x:pl.ix,y:y0,w:Math.min(48,Math.max(hb,16*k)),h:Math.max(hb,hs+2*k),id:'line',cb:()=>{ if(plan.wk){ MAP5.msg={s:'ВЫХОДНОЙ: МАРШРУТ ВЫБИРАЕШЬ В ПУТИ',t:3}; SFX.ui(); return; } m5Sheet(true); SFX.ui(); }});
+  const tfs=m5fs(11,k); let title=plan.wk?'ВЫХОДНОЙ МАРШРУТ':'МАРШРУТ ДНЯ'; if(R41r){ const chip=m5ChangeChip(pl,hy,k,pad); { const ww=chip-(chx+6*k)-6*k; title=['МАРШРУТ '+R41r.id+' · '+R41r.n,R41r.id+' · '+R41r.n,R41r.n].find(q=>txtW(q,tfs)<=ww)||m5Fit(R41r.n,ww,tfs); } } m5Lab(title,chx+6*k,hy,tfs,R41r?'#3a2a48':'#5a4a6a','left','hdr');
+  if(!R41r){ const items=[['c','метро']]; if(RT.x) items.push([RT.x.id==='mck'?'sq':'tri',RT.x.id==='mck'?'МЦК':'МЦД']); if(!RT.wk&&(N.some(n=>n.t==='bc'&&n.lock)||RT.G.some(g=>g.seg&&g.seg.locked))) items.push(['lock',(pl.iw/k>330?'закрыто — открой очками':'закрыто')]);
     let x=pl.ix+pl.iw-pad; const lim=chx+6*k+txtW(title,tfs)+8*k; for(let i=items.length-1;i>=0;i--){ const [sh,s]=items[i], w=txtW(s,tfs); if(x-w-9*k<lim) break; m5Lab(s,x-w,hy,tfs,'#6a6478','left','legend'); x-=w+3*k;
       if(sh==='lock') m5LockIco(x-3*k,hy,Math.max(1,Math.round(k*.75)),'#8a8898'); else m5Lamp(x-3*k,hy,k,sh,'next',true,3*k); m5Reg('legend',x-7*k,hy-4*k,8*k,8*k); x-=10*k; } }
   // геометрия по вертикали: блок по центру тела таблички
-  const bodyT=pl.iy+hs, bodyB=pl.iy+pl.ih-2*k;
+  const bodyT=pl.iy+hs, bodyB=pl.iy+pl.ih-2*k-(R41r?Math.round(11*k):0);
   if(Y.lv==='xl'){ const t0=D.rl+22*k, u0=D.gy+D.fs*.65, b0=RT.x?D.gy+D.fs*.65+D.rl+4*k+u0:u0, f=clamp((bodyB-bodyT-8*k)/(t0+b0),1,1.45); if(f>1.05){ D.rl=Math.round(D.rl*Math.min(f,1.35)); D.bt=Math.round(D.bt*Math.min(f,1.15)); D.fs=Math.round(D.fs*Math.min(f,1.25)*2)/2; D.fsS=Math.round(D.fsS*Math.min(f,1.25)*2)/2; D.gy=Math.round(D.gy*f); } }
+  if(R41r){ for(let it=0;it<6;it++){ const t0=D.rl+22*k, u0=D.gy+D.fs*.65, b0=RT.x?D.gy+D.fs*.65+D.rl+4*k+u0:u0; if(t0+b0+(RT.x?8*k:0)<=bodyB-bodyT) break; if(D.rl>Math.round(4*k)) D.rl=Math.max(Math.round(4*k),Math.round(D.rl*.82)); else if(RT.x) D.gy=Math.max(Math.round(D.fs*1.45),Math.round(D.gy*.9)); } }
   const top=D.rl+22*k, up=D.gy+D.fs*.65;
   const y2off=D.gy+D.fs*.65+D.rl+4*k, bot=RT.x?y2off+up:RT.wk?Math.max(up,20*k):up;
   const axY=Math.round(bodyT+Math.max(0,(bodyB-bodyT-(top+bot))/2)+top), y2=Math.round(axY+y2off);
   const wkW=RT.wk?Math.min(132*k,Math.round(pl.iw*.44)):0, axL=pl.ix+pad+9*k, axR=pl.ix+pl.iw-pad-7*k-wkW;
   let tot=0; for(const g of RT.G) tot+=g.w; let acc=0; N[0].x=axL; RT.G.forEach(g=>{ acc+=g.w; N[g.b].x=Math.round(axL+(axR-axL)*acc/tot); }); for(const n of N) n.y=n.t==='x'?y2:axY;
   const sts=m5States(N,plan); N.forEach((n,i)=>n.st=sts[i]);
+  // FB6: «сегодняшняя поездка» = от текущей лампы до первого замка; всё остальное бледнее
+  { let c0=N.findIndex(n=>n.st==='cur'); if(c0<0) c0=0; N.forEach(n=>n.reach=false); N[c0].reach=true; for(const g of RT.G){ if(N[g.a].reach&&!(g.seg&&g.seg.locked)&&N[g.b].st!=='lock') N[g.b].reach=true; }
+    if(!RT.wk){ const rn=N.filter(n=>n.reach), x0=Math.min(...rn.map(n=>n.x))-D.rl-5*k, x1=Math.max(...rn.map(n=>n.x))+D.rl+5*k, yb=rn.some(n=>n.t==='x')?y2:axY;
+      ctx.fillStyle='#bfe6b0'; ctx.fillRect(x0-k,axY-D.rl-5*k,x1-x0+2*k,yb-axY+2*D.rl+10*k); ctx.fillStyle='#e6f6dc'; ctx.fillRect(x0,axY-D.rl-4*k,x1-x0,yb-axY+2*D.rl+8*k);
+      RT.span={x0,x1,y0:axY-D.rl-5*k,y1:yb+D.rl+5*k}; const en=rn[rn.length-1]; RT.endName=en.t==='office'?'ОФИС':en.t==='bc'?'БЦ':en.name||null; RT.endT=en.t; } else { RT.span=null; RT.endName=null; } }
   // промежутки
   const dots=(xa,xb,yy,col)=>{ ctx.fillStyle=col; for(let xx=xa;xx<=xb-2*k;xx+=4*k) ctx.fillRect(xx,yy-k,2*k,2*k); };
   const band=(xa,xb,yy,c,c2)=>{ const t=D.bt; ctx.fillStyle=P.ink; ctx.fillRect(xa,yy-t-k,xb-xa,2*t+2*k+k); ctx.fillStyle=c; ctx.fillRect(xa,yy-t,xb-xa,2*t+k); ctx.fillStyle=shade(c,.3); ctx.fillRect(xa,yy-t,xb-xa,k); ctx.fillStyle=shade(c,-.3); ctx.fillRect(xa,yy+t,xb-xa,k);
     if(c2){ ctx.fillStyle=c2; for(let xx=xa+2*k;xx<xb-3*k;xx+=6*k) ctx.fillRect(xx,yy,3*k,k); } };
   const vband=(xx,ya,yb,c)=>{ const t=D.bt, a=Math.min(ya,yb), b=Math.max(ya,yb); ctx.fillStyle=P.ink; ctx.fillRect(xx-t-k,a-t-k,2*t+3*k,b-a+2*t+3*k); ctx.fillStyle=c; ctx.fillRect(xx-t,a-t,2*t+k,b-a+2*t+k); ctx.fillStyle=shade(c,.3); ctx.fillRect(xx-t,a-t,k,b-a+2*t+k); };
-  const XC={mck:['#e8354a','#ffffff'],mcd:['#ff8a1f','#3d6ff0']}; const prices=[];
-  const gapMark=(mx,locked,seg)=>{ ctx.fillStyle='#fffaf0'; ctx.fillRect(mx-7*k,axY-5*k,14*k,10*k); if(locked&&RT.wk){ m5Steps(mx,axY,k,'#b8b4c4'); m5Reg('lockg',mx-5*k,axY-4*k,10*k,8*k); } else if(locked){ m5LockIco(mx,axY,k,'#8a8898'); m5Reg('lockg',mx-4*k,axY-6*k,8*k,11*k); const th=unlockThr(SEG4[seg]&&SEG4[seg].unlock||seg); prices.push({x:mx,p:Math.max(0,th-pts)}); } else { m5Steps(mx,axY,k,'#5a5a6a'); m5Reg('lockg',mx-5*k,axY-4*k,10*k,8*k); } };
+  const XC={mck:['#e8354a','#ffffff'],mcd:['#ff8a1f','#3d6ff0']}; const prices=[], locks=[];
+  const gapMark=(mx,locked,seg,av)=>{ ctx.fillStyle='#fffaf0'; ctx.fillRect(mx-7*k,axY-5*k,14*k,10*k); if(locked&&RT.wk){ m5Steps(mx,axY,k,'#b8b4c4'); m5Reg('lockg',mx-5*k,axY-4*k,10*k,8*k); } else if(locked){ m5LockIco(mx,axY,k,'#8a8898'); m5Reg('lockg',mx-4*k,axY-6*k,8*k,11*k); const th=unlockThr(SEG4[seg]&&SEG4[seg].unlock||seg); prices.push({x:mx,p:Math.max(0,th-pts)}); locks.push({x:mx,p:Math.max(0,th-pts),av:av||40*k}); } else if(seg==='street1'&&RT.plan&&RT.plan.route&&typeof rt41==='function'&&rt41(RT.plan.route).bus){ m5MiniIco('bus',mx,axY,k); m5Reg('lockg',mx-5*k,axY-4*k,10*k,8*k); } else { m5Steps(mx,axY,k,'#5a5a6a'); m5Reg('lockg',mx-5*k,axY-4*k,10*k,8*k); } };
   for(const g of RT.G){ const a=N[g.a], b=N[g.b], locked=!!(g.seg&&g.seg.locked), xa=a.x+D.rl+2*k, xb=b.x-D.rl-2*k;
-    if(g.t==='walk'){ dots(xa,xb,axY,locked?'#c8c4d0':'#7e8494'); gapMark(Math.round((a.x+b.x)/2),locked,g.seg.id); }
+    if(g.t==='walk'){ dots(xa,xb,axY,locked?'#c8c4d0':'#7e8494'); gapMark(Math.round((a.x+b.x)/2),locked,g.seg.id,b.x-a.x-2*D.rl-4*k); }
     else if(g.t==='in'){ ctx.fillStyle=locked?'#c8c4d0':'#8a8898'; ctx.fillRect(xa,axY-k,xb-xa,2*k); }
     else if(g.t==='metro') band(a.x,b.x,axY,lc);
     else if(g.t==='metro2') band(a.x,b.x,axY,LINE_COL[b.line2]||lc,'#ffffff');
     else if(g.t==='fork'){ const xf=Math.round(a.x+(b.x-a.x)*.38), c=XC[g.seg.id]; band(a.x,xf+D.bt,axY,c[0],c[1]); vband(xf,axY,y2,c[0]); band(xf-D.bt,b.x,y2,c[0],c[1]); m5Reg('line',xf-D.bt-k,axY+D.rl,2*D.bt+3*k,y2-axY-2*D.rl); }
     else if(g.t==='xm'){ const c=XC[g.seg.id]; band(a.x,b.x,y2,c[0],c[1]); }
-    else if(g.t==='forkup'){ const xu=Math.round(b.x-(b.x-a.x)*.58), c=XC[RT.x.id]; band(a.x,xu+D.bt,y2,c[0],c[1]); vband(xu,y2,axY,c[0]); m5Reg('line',xu-D.bt-k,axY+D.rl,2*D.bt+3*k,y2-axY-2*D.rl); dots(xu+D.bt+3*k,xb,axY,locked?'#c8c4d0':'#7e8494'); { const ga=xu+D.bt+3*k, gb=b.x-D.rl-2*k; if(gb-ga>=16*k||locked) gapMark(Math.round((ga+gb)/2),locked,'street2'); } }
+    else if(g.t==='forkup'){ const xu=Math.round(b.x-(b.x-a.x)*.58), c=XC[RT.x.id]; band(a.x,xu+D.bt,y2,c[0],c[1]); vband(xu,y2,axY,c[0]); m5Reg('line',xu-D.bt-k,axY+D.rl,2*D.bt+3*k,y2-axY-2*D.rl); dots(xu+D.bt+3*k,xb,axY,locked?'#c8c4d0':'#7e8494'); { const ga=xu+D.bt+3*k, gb=b.x-D.rl-2*k; if(gb-ga>=16*k||locked) gapMark(Math.round((ga+gb)/2),locked,'street2',gb-ga); } }
     else if(g.t==='wk'){ ctx.fillStyle='#8a8898'; ctx.fillRect(xa,axY-k,xb-xa,2*k); const mx=Math.round((a.x+b.x)/2); if(xb-xa>=18*k){ ctx.fillStyle='#fffaf0'; ctx.fillRect(mx-7*k,axY-6*k,14*k,12*k); m5Escal(mx,axY,k); m5Reg('lockg',mx-7*k,axY-6*k,14*k,12*k); } } }
   // лампы + значки
   const lit=i=>MAP5.intro<=0||(1-MAP5.intro/MAP5.introT)*(N.length+1)>i;
@@ -251,9 +267,18 @@ function m5DrawRoute(Y,sy,day,plan,idx,RT,pl){ const {k,L,R,py,ph,hs}=Y, y0=py+s
     if(n.t==='wk'){ m5WkSigns(n,Y,axY,k,D,pl,wkW); return; }
     if(n.tf){ const a=r+2*k; ctx.fillStyle=P.ink; ctx.fillRect(n.x-a-k,n.y-a-k,2*a+3*k,2*a+3*k); ctx.fillStyle='#fffaf0'; ctx.fillRect(n.x-a,n.y-a,2*a+k,2*a+k); }
     m5Lamp(n.x,n.y,k,shape,n.st,lit(i),r); m5Reg('lamp',n.x-r-k,n.y-r-k,2*r+3*k,2*r+3*k); });
-  m5RouteLabels(RT,N,Y,axY,y2,k,lc,D,pl,prices.length&&!RT.wk?[prices.reduce((a,b)=>a.p<=b.p?a:b)]:[]);
+  if(RT.span){ const fy0=pl.iy+hs+k, fy1=pl.iy+pl.ih-2*k; ctx.fillStyle='rgba(255,250,240,.58)'; if(RT.span.x0-k>pl.ix) ctx.fillRect(pl.ix,fy0,RT.span.x0-k-pl.ix,fy1-fy0); if(RT.span.x1+k<pl.ix+pl.iw) ctx.fillRect(RT.span.x1+k,fy0,pl.ix+pl.iw-RT.span.x1-k,fy1-fy0); }
+  // FB6: цена прямо у каждого замка («🔒 ещё N очк.»), без «висящей» строки
+  if(!RT.wk){ const xL=pl.ix+pad, xR=pl.ix+pl.iw-pad, fz=D.fsS; for(const q of locks){ const n=q.p, cand=n>0?['ещё '+n+' очк.',n+' очк.',String(n),(n/1000).toFixed(1)+'k']:['скоро!'];
+      const ty=axY+7*k, th=Math.round(Math.max(fz,MINPX())*1.2)+2*k, bad=r0=>MAP5.rects.some(r=>['line','lamp','ico','price','lockg'].includes(r.kind)&&!(r.kind==='lockg'&&Math.abs(r.x+r.w/2-q.x)<6*k&&r.y<ty)&&r0.x<r.x+r.w&&r.x<r0.x+r0.w&&r0.y<r.y+r.h&&r.y<r0.y+r0.h);
+      let pick=null; for(const c of cand){ const w=txtW(c,fz); if(w+6*k>q.av&&c!==cand[cand.length-1]) continue; for(const dx of [0,1,-1,2,-2]){ const bw=w+8*k, bx=clamp(Math.round(q.x-bw/2+dx*bw/3),xL+k,xR-bw-k), box={x:bx,y:ty-k,w:bw,h:th+2*k}; if(!bad(box)){ pick={s:c,w,box}; break; } } if(pick) break; }
+      if(!pick) continue; const {s,w,box}=pick, tx=box.x+k;
+      ctx.fillStyle='#c8a050'; ctx.fillRect(box.x,box.y,box.w,box.h); ctx.fillStyle='#fff0c8'; ctx.fillRect(tx,ty,w+6*k,th); ctx.fillStyle='#c8a050'; ctx.fillRect(Math.round(q.x),ty-3*k,k,2*k);
+      G.labels.push([s,tx+3*k,ty+th/2,fz,'#7a5a1a','left',null]); m5Reg('price',box.x,box.y,box.w,box.h); q.tag={x:box.x,y:box.y,w:box.w,h:box.h,s}; } RT.locks=locks; }
+  m5RouteLabels(RT,N,Y,axY,y2,k,lc,D,pl,[]);
   // линейка времени по отрезкам (если в табличке есть свободная высота)
-  if(!RT.wk){ const lowL=Math.max(...MAP5.rects.filter(r=>r.y>axY-2*k&&r.y<pl.iy+pl.ih).map(r=>r.y+r.h),axY), spare=pl.iy+pl.ih-6*k-lowL;
+  if(R41r){ const lowL=Math.max(...MAP5.rects.filter(r=>r.y>axY-2*k&&r.y<pl.iy+pl.ih).map(r=>r.y+r.h),axY); m5Strip3(RT,N,plan,k,lowL,pl,axL,axR,D); }
+  else if(!RT.wk){ const lowL=Math.max(...MAP5.rects.filter(r=>r.y>axY-2*k&&r.y<pl.iy+pl.ih).map(r=>r.y+r.h),axY), spare=pl.iy+pl.ih-6*k-lowL;
     if(spare>=16*k){ const ry=Math.round(lowL+Math.min(spare/2,12*k)), fz=D.fsS, grp=[]; for(const g of RT.G){ const id=g.seg&&g.seg.id; const last=grp[grp.length-1]; if(last&&last.id===id) last.b=N[g.b].x; else grp.push({id,seg:g.seg,a:N[g.a].x,b:N[g.b].x}); }
       const nT=grp.filter(q=>{ const sg=(plan.segs||[]).find(z=>z.id===q.id); return sg&&!sg.locked&&sg.budget; }).length; if(nT>=2){ ctx.fillStyle='#d8ccb4'; ctx.fillRect(axL,ry,axR-axL,k); for(const q of grp){ ctx.fillStyle='#c8bca4'; ctx.fillRect(q.a,ry-k,k,3*k); const sg=(plan.segs||[]).find(z=>z.id===q.id);
         const t=sg&&!sg.locked&&sg.budget?('≈'+Math.floor(sg.budget/60)+':'+String(sg.budget%60).padStart(2,'0')):null; if(!t) continue; const w=txtW(t,fz); if(w+4*k>q.b-q.a) continue; ctx.fillStyle='#fffaf0'; ctx.fillRect(Math.round((q.a+q.b)/2-w/2-2*k),ry-2*k,Math.round(w+4*k),5*k); m5Lab(t,(q.a+q.b)/2-w/2,ry+.5,fz,'#9a8a6a','left','ruler'); }
@@ -272,24 +297,24 @@ function m5RouteLabels(RT,N,Y,axY,y2,k,lc,D,pl,prices){ const named=N.filter(n=>
   met.forEach((n,j)=>{ n.band=(met.length-1-j)%2===0?'dn':'up'; }); if(RT.wk) met.forEach(n=>n.band='dn');
   N.filter(n=>n.t==='x').forEach(n=>n.band='x2');
   const yOf=b=>b==='up'?axY-D.gy:b==='dn'?axY+D.gy:y2+D.gy;
-  const fixedOf=fs=>{ const o=[]; for(const n of N){ const s=n.t==='home'?'ДОМ':n.t==='bc'?'БЦ':n.t==='office'?'ОФИС':null; if(!s) continue; const w=txtW(s,fs); o.push({s,x:clamp(n.x-w/2,xL,xR-w),w,y:axY+D.gy,fix:1,col:'#6a5a3a'}); } return o; };
+  const fixedOf=fs=>{ const o=[]; for(const n of N){ const s=n.t==='home'?'ДОМ':n.t==='bc'?'БЦ':n.t==='office'?'ОФИС':null; if(!s) continue; const w=txtW(s,fs); o.push({s,x:clamp(n.x-w/2,xL,xR-w),w,y:axY+D.gy,fix:1,col:RT.span&&!n.reach&&n.st!=='done'?'#b4a88e':'#6a5a3a'}); } return o; };
   const H_=fs=>Math.max(fs,MINPX())*1.25;
   const hits=(a,arr,fs)=>{ const h=H_(fs); if(a.x<xL-.5||a.x+a.w>xR+.5) return true; for(const b of arr){ if(b===a) continue; if(Math.abs(a.y-b.y)<h&&a.x<b.x+b.w+6*k&&b.x<a.x+a.w+6*k) return true; }
-    for(const r of MAP5.rects) if(['ico','line','lamp','lockg','legend'].includes(r.kind)&&a.x<r.x+r.w&&r.x<a.x+a.w&&a.y-h/2<r.y+r.h&&r.y<a.y+h/2) return true; return false; };
+    for(const r of MAP5.rects) if(['ico','line','lamp','lockg','legend','price'].includes(r.kind)&&a.x<r.x+r.w&&r.x<a.x+a.w&&a.y-h/2<r.y+r.h&&r.y<a.y+h/2) return true; return false; };
   const plan=(fs,hideMid,ell)=>{ const out=fixedOf(D.fsS); for(const n of named){ if(hideMid&&n.t==='st'&&met.length>2&&n!==met[0]&&n!==met[met.length-1]&&!n.sel&&!n.exit) continue; let s=n.name, w=txtW(s,fs);
-      if(ell){ const lim=Math.max(40*k,Math.min(110*k,(xR-xL)/4)); while(w>lim&&s.length>4){ s=s.slice(0,-2)+'…'; w=txtW(s,fs); } }
-      out.push({n,s,w,x:clamp(n.x-w/2,xL,xR-w),y:yOf(n.band),col:n.sel?shade(lc,-.35):n.t==='x'?'#3a3442':'#1a1020',fs}); }
+      out.push({n,s,w,x:clamp(n.x-w/2,xL,xR-w),y:yOf(n.band),col:RT.span&&!n.reach?'#a89cb0':n.sel?shade(lc,-.35):n.t==='x'?'#3a3442':'#1a1020',fs}); }
     // МЦК/МЦД: гарантированный зазор между подписями нижнего ряда — иначе вторая ниже (шахматка), иначе мельче/«…»
     const xs=out.filter(q=>q.n&&q.n.t==='x'); if(xs.length===2){ const [a,b]=xs, gapMin=Math.max(6*k,10), lh=Math.max(fs,MINPX())*1.25, y3=y2+D.gy+lh, room=pl.iy+pl.ih-3*k-lh/2;
       const sep=()=>b.x-(a.x+a.w); if(sep()<gapMin){ const yU=y2-D.gy, tryU=[b,a].find(q=>{ const o=q.y; q.y=yU; const bad=hits(q,out,q.fs||fs); if(bad) q.y=o; return !bad; }); if(tryU){} else if((()=>{ const ax=a.x,bx=b.x; a.x=clamp(a.n.x+D.rl-a.w,xL,xR-a.w); b.x=clamp(b.n.x-D.rl,xL,xR-b.w); if(sep()>=gapMin&&!hits(a,out,a.fs||fs)&&!hits(b,out,b.fs||fs)) return true; a.x=ax; b.x=bx; return false; })()){} else if(y3<=room){ b.y=y3; b.band='x3'; } else { let f2=fs; while(sep()<gapMin&&f2>D.fsS-k){ f2-=.5; for(const q of xs){ q.fs=f2; q.w=txtW(q.s,f2); q.x=clamp(q.n.x-q.w/2,xL,xR-q.w); } }
         while(sep()<gapMin&&(a.s.length>4||b.s.length>4)){ for(const q of xs){ if(q.s.length>4){ q.s=q.s.replace(/…$/,'').slice(0,-1)+'…'; q.w=txtW(q.s,q.fs); q.x=clamp(q.n.x-q.w/2,xL,xR-q.w); } } } } } }
     for(const p of prices){ const s=p.p>0?'ещё '+p.p+' очк.':'откроется!', w=txtW(s,D.fsS); let q={s,w,x:clamp(p.x-w/2,xL,xR-w),y:axY+D.gy,col:'#8a6a2a',price:1,fs:D.fsS}; if(hits(q,out,D.fsS)) q={...q,y:axY-D.gy}; out.push(q); }
     for(const q of out){ if(!q.n||!hits(q,out,q.fs||D.fsS)) continue; const x0=q.x, y0=q.y, ys=q.n.t==='x'?[y0,y2-D.gy]:[y0,q.band==='up'?axY+D.gy:axY-D.gy]; let done=false;
-      for(const yy of ys){ for(const nx of [q.n.x-q.w/2,q.n.x+D.rl-q.w,q.n.x-D.rl,q.n.x-q.w*.75,q.n.x-q.w*.25]){ q.x=clamp(nx,xL,xR-q.w); q.y=yy; if(!hits(q,out,q.fs||D.fsS)){ done=true; break; } } if(done) break; } if(!done){ q.x=x0; q.y=y0; } }
+      for(const yy of ys){ for(const nx of [q.n.x-q.w/2,q.n.x+D.rl-q.w,q.n.x-D.rl,q.n.x-q.w*.75,q.n.x-q.w*.25,...[1,2,3,5,6,7,8,9,10,11,13,14,15].map(t=>q.n.x-q.w*t/16)]){ q.x=clamp(nx,xL,xR-q.w); q.y=yy; if(!hits(q,out,q.fs||D.fsS)){ done=true; break; } } if(done) break; } if(!done&&ell){ let s0=q.n.name; const f=q.fs||D.fsS; while(!done&&s0.length>5){ s0=s0.slice(0,-1); q.s=s0+'…'; q.w=txtW(q.s,f); for(const yy of ys){ for(const t of [8,4,12,2,6,10,14,0,16]){ q.x=clamp(q.n.x-q.w*t/16,xL,xR-q.w); q.y=yy; if(!hits(q,out,f)){ done=true; break; } } if(done) break; } } }
+      if(!done){ q.x=x0; q.y=y0; } }
     return out; };
   const ok=arr=>arr.every(a=>!hits(a,arr,a.fs||D.fsS));
   let best=null; for(const [fs,hm,el] of [[D.fs,false],[D.fs-k*.5,false],[D.fs-k,false],[D.fsS,false],[D.fs,true],[D.fs-k,true],[D.fsS,true],[D.fsS,true,true]]){ const a=plan(fs,hm,el); if(ok(a)){ best=a; break; } }
-  if(!best){ best=plan(D.fsS,true,true); const keep=[]; for(const a of best){ if(a.n&&(a.n.sel||a.n.exit)&&hits(a,keep,a.fs||D.fsS)){ const f=a.fs||D.fsS; for(const yy of [a.y,a.y===axY-D.gy?axY+D.gy:axY-D.gy]){ a.y=yy; let s0=a.n.name; while(s0.length>5){ a.s=s0===a.n.name?s0:s0+'…'; a.w=txtW(a.s,f); let okx=false; for(const nx of [a.n.x-a.w/2,a.n.x-D.rl,a.n.x+D.rl-a.w]){ a.x=clamp(nx,xL,xR-a.w); if(!hits(a,keep,f)){ okx=true; break; } } if(okx) break; s0=s0.slice(0,-1); } if(!hits(a,keep,f)) break; } }
+  if(!best){ best=plan(D.fsS,true,true); const keep=[]; for(const a of best){ if(a.n&&(a.n.sel||a.n.exit)&&hits(a,keep,a.fs||D.fsS)){ const f=a.fs||D.fsS; { a.s=a.n.name; a.w=txtW(a.s,f); const ys=[a.y,a.y===axY-D.gy?axY+D.gy:axY-D.gy], soft=b=>b.n&&b.n.t==='st'&&!b.n.sel&&!b.n.exit; let got=false; for(const pass of [0,1]){ for(const yy of ys){ for(const t of [8,4,12,2,6,10,14,0,16,1,3,5,7,9,11,13,15,-2,-3,-4,-6]){ a.y=yy; a.x=clamp(a.n.x-a.w*t/16,xL,xR-a.w); const kk=pass?keep.filter(b=>!soft(b)):keep; if(!hits(a,kk,f)){ got=true; if(pass){ for(let i=keep.length-1;i>=0;i--) if(soft(keep[i])&&hits(a,[keep[i]],f)) keep.splice(i,1); } break; } } if(got) break; } if(got) break; } if(got){ keep.push(a); continue; } } for(const yy of [a.y,a.y===axY-D.gy?axY+D.gy:axY-D.gy]){ a.y=yy; let s0=a.n.name; while(s0.length>5){ a.s=s0===a.n.name?s0:s0+'…'; a.w=txtW(a.s,f); let okx=false; for(const nx of [a.n.x-a.w/2,a.n.x-D.rl,a.n.x+D.rl-a.w]){ a.x=clamp(nx,xL,xR-a.w); if(!hits(a,keep,f)){ okx=true; break; } } if(okx) break; s0=s0.slice(0,-1); } if(!hits(a,keep,f)) break; } }
     if(!hits(a,keep,a.fs||D.fsS)||a.n&&a.n.sel) keep.push(a); } best=keep; }
   for(const q of best){ m5Lab(q.s,q.x,q.y,q.fs||D.fsS,q.col,'left',q.price?'price':'lab'); } }
 // ---------- выходной: указатели-таблички на столбе (информация, выбор — в игре) ----------
@@ -347,7 +372,7 @@ function m5DrawLine(Y,sy,pl){ const {k,L,R,py,ph,hs}=Y, y0=py+sy, w=mapLine, op=
 // ---------- карточка станции v2: иерархия + полоса цели + строка погоды/рисков ----------
 function m5DayRisks(plan){ const out=[]; const add=e=>{ if(e&&!out.includes(e)&&M5_RISK[e]) out.push(e); }; for(const s of plan.segs||[]) if(!s.locked&&s.events) s.events.forEach(e=>add(e.k)); (plan.events||[]).forEach(add);
   return out.sort((a,b)=>(M5_HEAVY.includes(b)?1:0)-(M5_HEAVY.includes(a)?1:0)); }
-function m5Card(Y,day,plan,idx){ const {k,L,by,bh,dx0}=Y, x=L, y=by+2*k, w=dx0-9*k-L, h=bh-4*k, wl=Math.floor(idx/8), lc=LINE_COL[wl], s=LEVELS[idx], st=save.stars[wl+'.'+(idx%8)]||0, pad=m5Pad(k);
+function m5Card(Y,day,plan,idx){ const {k,L,by,bh,dx0}=Y, x=L, y=by+2*k, w=dx0-9*k-L, h=bh-4*k, wl=Math.floor(idx/8), lc=LINE_COL[wl], s=LEVELS[idx], R41r=m5R41(plan), st=R41r?(save.routes.stars[R41r.id]|0):save.stars[wl+'.'+(idx%8)]||0, pad=m5Pad(k);
   ctx.fillStyle='rgba(60,40,20,.3)'; ctx.fillRect(x+2*k,y+2*k,w,h); m5Box(x,y,w,h,'#f4ead0',k); ctx.fillStyle='#fffaf0'; ctx.fillRect(x,y,w,k); ctx.fillStyle='#d8ccae'; ctx.fillRect(x,y+h-k,w,k);
   ctx.fillStyle=P.ink; ctx.fillRect(x,y,5*k,h); ctx.fillStyle=lc; ctx.fillRect(x,y,4*k,h); ctx.fillStyle=shade(lc,.3); ctx.fillRect(x,y,k,h); ctx.fillStyle=shade(lc,-.3); ctx.fillRect(x+3*k,y,k,h);
   for(const [rx,ry] of [[x+w-3*k,y+2*k],[x+w-3*k,y+h-4*k]]) m5Rivet(rx,ry,k);
@@ -357,16 +382,22 @@ function m5Card(Y,day,plan,idx){ const {k,L,by,bh,dx0}=Y, x=L, y=by+2*k, w=dx0-9
   ctx.fillStyle='#8a8494'; ctx.fillRect(px,pyy+ps-2*k,ps,2*k);
   if(m5CanBuy()){ m5Box(px+ps-6*k,pyy-2*k,8*k,8*k,'#ffd23f',k); ctx.fillStyle=P.ink; ctx.fillRect(px+ps-3*k,pyy-k,2*k,6*k); ctx.fillRect(px+ps-5*k,pyy+k,6*k,2*k); }
   m5Reg('hero',px-k,pyy-3*k,ps+3*k,ps+4*k);
-  const tx=x+10*k, tw=px-5*k-tx, big=h>=58*k, fsB=m5fs(big?17:15,k), fsS=m5fs(big?12.5:11,k), lhS=Math.max(fsS,MINPX())*1.2; let f=fsB, nm=s.name.toUpperCase(); while(txtW(nm,f)>tw&&f>m5fs(11,k)) f-=.5; nm=m5Fit(nm,tw,f);
+  const tx=x+10*k, tw=px-5*k-tx, big=h>=58*k, fsB=m5fs(big?17:15,k), fsS=m5fs(big?12.5:11,k), lhS=Math.max(fsS,MINPX())*1.2; let f=fsB, nm=R41r?R41r.n:s.name.toUpperCase(); while(txtW(nm,f)>tw&&f>m5fs(11,k)) f-=.5; nm=m5Fit(nm,tw,f);
   const lhB=Math.max(f,MINPX())*1.2, botH=Math.max(12*k,lhS+4*k), botY=y+h-botH; let cy=y+4*k+lhB/2;
   m5Lab(nm,tx,cy,f,'#1a1020','left','card'); cy+=lhB/2+lhS/2+k;
   const mm=Math.floor(plan.total/60), ss=String(Math.round(plan.total%60)).padStart(2,'0'), nst=MAP5.rt?MAP5.rt.N.filter(n=>n.t==='st'||n.t==='x').length-1:0;
-  const info=(plan.wk?'выходной':Math.max(1,nst)+' ост.')+' · ≈ '+mm+':'+ss; if(cy+lhS/2<botY-k){ m5Lab(m5Fit(info,tw,fsS),tx,cy,fsS,'#5a4a6a','left','card'); cy+=lhS; }
+  const nev=(plan.segs||[]).reduce((a,g)=>a+(g.id==='metro'?0:g.events.length),0), info=R41r?('3 экрана · ≈ '+mm+':'+ss+(nev?' · событий '+nev:'')):(plan.wk?'выходной':Math.max(1,nst)+' ост.')+' · ≈ '+mm+':'+ss; const roomGoal=cy+lhS*1.5+k+2*k<botY; if(!roomGoal&&!plan.wk&&cy+lhS/2<botY-k){ const sp=Math.round(plan.total*.2); let pk=null; for(const c of ['★ вовремя · ★★ запас '+sp+' с · ★★★ + место','★ вовремя ★★ +'+sp+' с ★★★ +место','★ вовремя ★★ +'+sp+'с ★★★ место','★ успеть ★★ +'+sp+'с ★★★ место','★успеть ★★+'+sp+'с ★★★место','★★ запас '+sp+' с']){ for(let f=fsS;f>=m5fs(9,k)-.01&&!pk;f-=.5) if(txtW(c,f)<=tw) pk=[c,f]; if(pk) break; } if(pk){ m5Lab(pk[0],tx,cy,pk[1],'#5a4a6a','left','card'); MAP5.goalLines=[pk[0]]; cy=1e9; } }
+  if(cy+lhS/2<botY-k){ { const inf=[info,info.replace(' · событий ',' · соб. '),info.split(' · событий')[0],'≈ '+mm+':'+ss].find(q=>txtW(q,fsS)<=tw)||info; m5Lab(m5Fit(inf,tw,fsS),tx,cy,fsS,'#5a4a6a','left','card'); } cy+=lhS; }
   // цель/рекорд + полоса (ширина — до края карточки, если ниже портрета)
   const rec=save.tbest&&save.tbest[idx]||0, gy=cy+k, bwFull=(gy>pyy+ps+2*k?x+w-6*k:px-5*k)-tx;
-  if(gy+lhS/2+5*k<botY){ const goal=plan.wk?((day.weekday===6?'воскресенье':'суббота')+' — без цели'):('цель '+plan.target+(rec?' · рекорд '+rec:'')); m5Lab(m5Fit(goal,bwFull,fsS),tx,gy,fsS,'#5a4a6a','left','card');
-    const yb=Math.round(gy+lhS/2+(big?3:1)*k); if(!plan.wk&&yb+5*k<botY){ const bw=bwFull, r=Math.min(1,rec/Math.max(1,plan.target)); const bt=big?3*k:2*k; m5Box(tx,yb,bw,bt,'#d8ccae',k); ctx.fillStyle=r>=1?'#3cb860':'#ffb43a'; ctx.fillRect(tx,yb,Math.round(bw*r),bt); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fillRect(tx,yb,Math.round(bw*r),k); m5Reg('bar',tx-k,yb-k,bw+2*k,4*k); } }
-  if(plan.wk&&MAP5.rt&&MAP5.rt.wk){ const pr=(MAP5.rt.N.find(n=>n.t==='wk')||{}).pair||[]; let yy=Math.round(gy+lhS*1.2); for(const kk of pr){ const d=WK5[kk]; if(!d||yy+lhS/2>botY-2*k) break; m5MiniIco(M5_WKV[kk]||'bus',tx+5*k,yy,k); m5Lab(m5Fit(d.t.toLowerCase()+': '+(day.weekday===6?d.sun:d.sub),bwFull-14*k,fsS),tx+13*k,yy,fsS,shade(d.col,-.25),'left','card'); m5Reg('wkico',tx-k,yy-5*k,12*k,10*k); yy+=Math.max(lhS,11*k); } }
+  if(gy+lhS/2+2*k<botY){ const sp=Math.round(plan.total*.2), two=gy+lhS*1.5+2*k<botY; let G2=null;
+    if(plan.wk) G2=[[(day.weekday===6?'воскресенье':'суббота')+' — без цели'],['выходной — без цели']];
+    else G2=(two?[['★ вовремя · ★★ запас '+sp+' с','★★★ + угол или место в вагоне'],['★ вовремя · ★★ запас '+sp+' с','★★★ + угол/место'],['★ к 09:00 ★★ +'+sp+' с','★★★ + угол/место']]:[])
+      .concat([['★ вовремя · ★★ запас '+sp+' с · ★★★ + место'],['★ вовремя ★★ +'+sp+' с ★★★ +место'],['★ вовремя · ★★ запас '+sp+' с'],['★★ запас '+sp+' с']]);
+    let pick=null; for(const c of G2){ for(let f=fsS;f>=m5fs(9,k)-.01&&!pick;f-=.5) if(c.every(q=>txtW(q,f)<=bwFull)) pick={c,f}; if(pick) break; }
+    if(pick){ pick.c.forEach((q,j)=>m5Lab(q,tx,gy+j*lhS,pick.f,j?'#7a5a2a':'#5a4a6a','left','card')); MAP5.goalLines=pick.c; }
+    const yb=1e9; if(false){ const bw=bwFull, r=Math.min(1,rec/Math.max(1,plan.target)); const bt=big?3*k:2*k; m5Box(tx,yb,bw,bt,'#d8ccae',k); ctx.fillStyle=r>=1?'#3cb860':'#ffb43a'; ctx.fillRect(tx,yb,Math.round(bw*r),bt); ctx.fillStyle='rgba(255,255,255,.5)'; ctx.fillRect(tx,yb,Math.round(bw*r),k); m5Reg('bar',tx-k,yb-k,bw+2*k,4*k); } }
+  if(plan.wk&&MAP5.rt&&MAP5.rt.wk){ const pr=(MAP5.rt.N.find(n=>n.t==='wk')||{}).pair||[]; let yy=Math.round(gy+lhS*1.2); for(const kk of pr){ const d=WK5[kk]; if(!d||yy+lhS/2>botY-2*k) break; m5MiniIco(M5_WKV[kk]||'bus',tx+5*k,yy,k); { const sub=(day.weekday===6?d.sun:d.sub), cands=[d.t.toLowerCase()+': '+sub,sub,d.t.toLowerCase()], ww=bwFull-14*k; let pk=null; for(const c of cands){ for(let f=fsS;f>=m5fs(9,k)-.01&&!pk;f-=.5) if(txtW(c,f)<=ww) pk=[c,f]; if(pk) break; } if(!pk) pk=[m5Fit(d.t.toLowerCase(),ww,m5fs(9,k)),m5fs(9,k)]; m5Lab(pk[0],tx+13*k,yy,pk[1],shade(d.col,-.25),'left','card'); } m5Reg('wkico',tx-k,yy-5*k,12*k,10*k); yy+=Math.max(lhS,11*k); } }
   // нижняя строка: погода · риски дня · звёзды
   ctx.fillStyle='#d8ccae'; for(let xx=x+7*k;xx<x+w-3*k;xx+=4*k) ctx.fillRect(xx,botY,2*k,k);
   const ry=Math.round(botY+botH/2+k/2), wx=dayWeather(day), tp=m5Temp(day,wx); let rx=tx; m5WxIco(wx,rx+4*k,ry,k); rx+=10*k; const ts=(tp>0?'+':'')+tp+'°'; m5Lab(ts,rx,ry,fsS,'#3a5a8a','left','card'); rx+=txtW(ts,fsS)+5*k;
@@ -421,11 +452,11 @@ drawMap=function(){ if(typeof HS!=='undefined'&&HS.open) return drawHeroes();
   if(idx!==MAP5.lastIdx){ if(MAP5.lastIdx>=0&&!calm) MAP5.flick=.45; MAP5.lastIdx=idx; }
   const sway=(!calm&&(G.t%3.1)>2.9)?1:0, lc=LINE_COL[Math.floor(idx/8)];
   m5Wall(Y); m5Led(Y,day,plan,idx); m5Menu(Y);
-  const pl=m5Plate(Y,sway,MAP5.sheet?(lineOpen(mapLine)?LINE_COL[mapLine]:'#8a8898'):lc,true); MAP5.pl=pl; const nb0=buttons.length; if(MAP5.sheet) m5DrawLine(Y,sway,pl); else m5DrawRoute(Y,sway,day,plan,idx,RT,pl);
+  const rp=MAP5.sheet&&typeof m5Picker==='function'&&!plan.wk; MAP5.rp=rp; const pl=m5Plate(rp?Object.assign({},Y,{ph:Y.B-Y.py}):Y,sway,rp?'#2aa860':MAP5.sheet?(lineOpen(mapLine)?LINE_COL[mapLine]:'#8a8898'):lc,true); MAP5.pl=pl; const nb0=buttons.length; if(rp) m5Picker(Y,pl,plan); else if(MAP5.sheet) m5DrawLine(Y,sway,pl); else m5DrawRoute(Y,sway,day,plan,idx,RT,pl);
   if(MAP5.flipTo!=null){ const f=MAP5.flip, cov=Math.round((f<.5?f*2:(1-f)*2)*pl.ih); ctx.fillStyle='#ece4d0'; ctx.fillRect(pl.ix,pl.iy,pl.iw,cov); ctx.fillStyle='#cfc4aa'; for(let yy=pl.iy+4*Y.k;yy<pl.iy+cov;yy+=5*Y.k) ctx.fillRect(pl.ix,yy,pl.iw,Y.k); ctx.fillStyle=P.ink; ctx.fillRect(pl.ix,pl.iy+cov,pl.iw,Y.k);
     G.labels=G.labels.filter(l=>!(l[2]>pl.iy&&l[2]<pl.iy+cov+4)); buttons.length=nb0; }
-  const card=m5Card(Y,day,plan,idx); buttons.push({x:card.px-2*Y.k,y:card.pyy-3*Y.k,w:card.ps+4*Y.k,h:card.ps+6*Y.k,id:'heroes',cb:()=>{ SFX.ui(); openHeroes(); }});
-  m5Door(Y,sway,wx); m5GoBtn(Y);
+  if(!rp){ const card=m5Card(Y,day,plan,idx); buttons.push({x:card.px-2*Y.k,y:card.pyy-3*Y.k,w:card.ps+4*Y.k,h:card.ps+6*Y.k,id:'heroes',cb:()=>{ SFX.ui(); openHeroes(); }});
+  m5Door(Y,sway,wx); m5GoBtn(Y); }
   MAP4.rects=MAP5.rects; MAP4.labs=MAP5.labs; MAP4.seg=[]; MAP4.intro=MAP5.intro; };
 { const _r=render; render=function(){ MAP5.ledQ=[]; _r.apply(this,arguments); if(G.scene==='map'&&!(typeof HS!=='undefined'&&HS.open)&&MAP5.ledQ.length){ tctx.setTransform(1,0,0,1,0,0); for(const f of MAP5.ledQ) f(); } MAP5.ledQ=[]; }; }
 { const _tm=toMap; toMap=function(){ const r=_tm.apply(this,arguments); const calm=m5Calm(); MAP5.intro=calm?0:MAP5.introT; MAP5.sheet=false; MAP5.flipTo=null; MAP5.flip=0; MAP5.door=0; MAP5.doorOn=false; MAP5.closeT=0;

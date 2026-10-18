@@ -68,7 +68,7 @@ function drawBG(cam){ const lv=BG.lv, lc=LINE_COL[lv.line], t=BG.t;
   floorAO(); lampPools(cam);
   // фон-пассажиры у стены (силуэты, на платформе у края)
   for(const a of BG.amb){ const sx=Math.floor(a.x-cam); if(sx<-20||sx>W+20) continue;
-    if(a.k==='pax'&&lv.bg==='station'){ const img=personSprite(a.spec,a.pose,Math.floor(t*4+a.bob)%4,'norm',Math.floor(t*10)); ctx.save(); ctx.filter='brightness(.55) saturate(.7)'; ctx.translate(sx,FY0-3); if(a.f) ctx.scale(-1,1); ctx.drawImage(img,-24,-46,48,48); ctx.restore(); }
+    if(a.k==='pax'&&lv.bg==='station'){ const img=personSprite(a.spec,a.pose,Math.floor(t*4+a.bob)%4,'norm',Math.floor(t*10)); ctx.save(); ctx.filter='brightness(.55) saturate(.7)'; ctx.translate(sx,FY0+2); if(a.f) ctx.scale(-1,1); ctx.drawImage(img,-24,-46,48,48); ctx.restore(); }
   }
 }
 function drawPigeons(cam){ if(BG.lv&&BG.lv.bg==='car') return; for(const a of BG.amb) if(a.k==='pig'){ const sx=Math.floor(a.x-cam), sy=Math.floor(FY0+6+Math.max(0,a.y)*40+Math.min(0,a.y)); if(sx<-10||sx>W+10) continue;

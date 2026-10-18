@@ -24,9 +24,9 @@ tripHUD=function(){ const L=SA.l+4, R=W-SA.r-4, T=SA.t+3, z=TR.z;
   // большие часы: 08:40 → 09:00
   const k=Math.max(0,TR.tLeft/TR.tTotal), mins=Math.floor(20*(1-k)), secs=Math.floor((20*(1-k)-mins)*60), crit=k<.15;
   const clock='08:'+String(40+Math.min(19,mins)).padStart(2,'0'); const blink=crit&&Math.floor(G.t*3)%2;
-  ctx.fillStyle='#120c18c0'; ctx.fillRect(L,T,84,30); G.labels.push([clock,L+42,T+15,16,blink?'#ff4a4a':crit?'#ff8a8a':'#fff']);
+  ctx.fillStyle='#120c18f2'; ctx.fillRect(L,T,84,30); TR.hudClock={x:L,y:T,w:84,h:30}; G.labels.push([clock,L+42,T+15,16,blink?'#ff4a4a':crit?'#ff8a8a':'#fff']);
   // строка цели
-  const g=G.msg?G.msg.s:goalText(z), gc=G.msg?G.msg.col:'#ffe28a'; let gs=10; while(gs>7&&txtW(g,gs)+20>W-200) gs-=.5; const gw=Math.min(W-200,txtW(g,gs)+20); ctx.fillStyle='#120c18c0'; ctx.fillRect(Math.round(W/2-gw/2),T,gw,22); G.labels.push([g,W/2,T+11,gs,gc]); // длинная цель ужимается, а не лезет на часы/паузу
+  const g=G.msg?G.msg.s:goalText(z), gc=G.msg?G.msg.col:'#ffe28a'; let gs=10; while(gs>7&&txtW(g,gs)+20>W-200) gs-=.5; const gw=Math.min(W-200,txtW(g,gs)+20); ctx.fillStyle='#120c18ee'; ctx.fillRect(Math.round(W/2-gw/2),T,gw,22); G.labels.push([g,W/2,T+11,gs,gc]); // длинная цель ужимается, а не лезет на часы/паузу
   // скандал — только когда растёт
   // V33-6/O5.5: сетка HUD — ряд 0 цель (T..T+22), ряд 1 скандал (T+25..T+37) в своей плашке, ряд 2 кошелёк (T+48)
   if(TR.scandal>12){ const bw=90, lw=Math.ceil(txtW('СКАНДАЛ',6)), pw=lw+bw+14, px=Math.round(W/2-pw/2), bx=px+lw+8, by=T+29; ctx.fillStyle='#120c18c0'; ctx.fillRect(px,T+25,pw,12); ctx.fillStyle=P.ink; ctx.fillRect(bx-1,by-1,bw+2,6); ctx.fillStyle='#3a2030'; ctx.fillRect(bx,by,bw,4); ctx.fillStyle=TR.scandal>70?P.red:'#ff9a3a'; ctx.fillRect(bx,by,Math.round(bw*Math.min(1,TR.scandal/100)),4); G.labels.push(['СКАНДАЛ',px+4,by+2,6,'#ffb0a0','left']); TR.hudScandal={x:px,y:T+25,w:pw,h:12}; } else TR.hudScandal=null;
