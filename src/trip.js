@@ -80,7 +80,7 @@ function softZones(z,dt){ if(!window.hudRects||z.k==='esc'||z.k==='escape') { fo
 function pixStep(e){ if(e.rx===undefined||Math.abs(e.x-e.rx)>6||Math.abs(e.y-e.ry)>6){ e.rx=Math.round(e.x); e.ry=Math.round(e.y); return; } e.rx+=Math.trunc(e.x-e.rx); e.ry+=Math.trunc(e.y-e.ry); }
 function density(h,list){ let n=0; for(const e of list){ if(e===h||e.ghost) continue; const d=Math.hypot(e.x-h.x,(e.y-h.y)*2); if(d<h.r+e.r+5) n+=e.m; } return n; }
 function walkTo(e,tx,ty,sp,dt){ const dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy*1.6); if(d<1.5){ e.vx=0; e.vy=0; if(e.st==='walk') e.set('idle'); return true; } e.vx=dx/d*sp; e.vy=dy/d*sp*.7; e.x+=e.vx*dt; e.y+=e.vy*dt; e.face=Math.abs(dx)>2?(dx>0?1:-1):e.face; e.set('walk'); return false; }
-function npcTick(e,dt){ e.anT+=dt; e.stT+=dt; e.sq+=(1-e.sq)*Math.min(1,dt*12); e.flash=Math.max(0,(e.flash||0)-dt); if(e.stun>0){ e.stun-=dt; } if(e.bub>0) e.bub-=dt; }
+function npcTick(e,dt){ e.anT+=dt; e.stT+=dt; e.sq+=(1-e.sq)*Math.min(1,dt*12); e.flash=Math.max(0,(e.flash||0)-dt); if(e.stun>0){ e.stun-=dt; if(e.stun<=0) e.stun=0; } /* 4.1.1: без «-1e-15» — иначе !e.stun навсегда false */ if(e.bub>0) e.bub-=dt; }
 function tev(k){ (TR.ev=TR.ev||{})[k]=(TR.ev[k]||0)+1; }
 function bubble(e,s,t=1.6,col='#fff'){ e.bub=t; e.bubS=s; e.bubC=col; }
 // ---------- старт поездки ----------
@@ -158,7 +158,7 @@ function tripUpdate(dt){ const h=G.hero, z=TR.z; if(!z) return;
   // контекст-кнопки
   const c=ZONES[z.k].ctx(z)||{}; z.ctxB=c.b||null; z.ctxA=c.a||null;
 }
-function heroMove(h,dt,z){ if(h.stun>0){ h.stun-=dt; h.set('hurt'); return; } if(h.hold||h.seat){ const s=stickVec(); if(Math.hypot(s.x,s.y)>.6&&!z.noLeave){ h.hold=null; h.seat=null; h.pin=false; TR.spot=0; TR.spotName='стоя'; } else { h.set(h.seat?'sleep':'idle'); return; } }
+function heroMove(h,dt,z){ if(h.stun>0){ h.stun-=dt; if(h.stun<=0) h.stun=0; if(h.lie411>0){ h.vx=0; h.vy=0; } h.set(h.lie411>0&&h.stun>h.lie411?'down':'hurt'); if(h.stun===0&&h.lie411){ h.lie411=0; h.inv411=.6; } return; } if(h.inv411>0) h.inv411=Math.max(0,h.inv411-dt); if(h.stun<0) h.stun=0; /* 4.1.1: остаток −1e-15 ломал все проверки !h.stun (доска, лёд, турникеты…) */ if(h.hold||h.seat){ const s=stickVec(); if(Math.hypot(s.x,s.y)>.6&&!z.noLeave){ h.hold=null; h.seat=null; h.pin=false; TR.spot=0; TR.spotName='стоя'; } else { h.set(h.seat?'sleep':'idle'); return; } }
   const s=stickVec(); const den=z.noCrowd?0:density(h,z.npcs); const S=heroStats(); let sp=S.SPD*(1/(1+den*S.SQZ*(1-S.YIELD)))*(TR.boost>0?1.35:1)*(z.slow||1)*(TR.nerves<25?.8:1)*(z.wet?S.stairsMul:1); // M1-19: статы героя
   if(z.wet){ h.vx+=(s.x*sp-h.vx)*Math.min(1,dt*2.2); h.vy+=(s.y*sp*.7-h.vy)*Math.min(1,dt*2.2); } else { h.vx=s.x*sp; h.vy=s.y*sp*.7; }
   h.x+=h.vx*dt; h.y+=h.vy*dt; if(Math.abs(h.vx)>4) h.face=h.vx>0?1:-1;

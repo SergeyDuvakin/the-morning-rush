@@ -134,9 +134,9 @@ SEV.ice={ title:z=>'ГОЛОЛЁД',
   sand(p,y){ return Math.abs(y-p.sy)<=5; },
   update(z,dt){ const h=G.hero, s=stickVec(), p=this.on(z); z.fallCd-=dt; const slick=p&&!this.sand(p,h.y)&&!h.stun; z.wet=!!slick;
     if(slick){ if(!z.tipd){ z.tipd=1; tev('ice_on'); say('Скользко! Не дёргайся — или иди по песку',1.8,'#bfe6ff'); }
-      const v=Math.hypot(h.vx,h.vy), sm=Math.hypot(s.x,s.y); if(v>34&&sm>.5&&z.fallCd<=0){ const dot=(h.vx*s.x+h.vy*s.y)/(v*sm); if(dot<-.2) this.fall(z); } }
+      const v=Math.hypot(h.vx,h.vy), sm=Math.hypot(s.x,s.y); if(v>34&&sm>.5&&z.fallCd<=0&&!(h.inv411>0)){ const dot=(h.vx*s.x+h.vy*s.y)/(v*sm); if(dot<-.2) this.fall(z); } }
     if(h.stun<=0&&z.fell){ z.fell=0; } },
-  fall(z){ const h=G.hero; tev('ice_fall'); penalize(4,'ice'); h.stun=1; h.vx=0; h.vy=0; h.set('hurt'); SFX.land(); shake(2); haptic('error'); pop('ОЙ! −4 с',h.x,h.y-50,'#bfe6ff',8); say('Поскользнулся! Плавнее — или по песку',1.8,'#bfe6ff'); z.fallCd=1.6; z.fell=1; },
+  fall(z){ const h=G.hero; if(h.inv411>0||h.stun>0) return; tev('ice_fall'); penalize(2,'ice'); h.stun=.9; h.lie411=.3; h.vx=0; h.vy=0; h.set('down'); SFX.land(); shake(2); haptic('error'); pop('ОЙ! −2 с',h.x,h.y-50,'#bfe6ff',8); say('Поскользнулся! Плавнее — или по песку',1.8,'#bfe6ff'); z.fallCd=1.6; z.fell=1; },
   goal(z){ const p=this.on(z); return p&&!this.sand(p,G.hero.y)?'Лёд: плавно, без резких разворотов':null; },
   tip:z=>'на льду не меняй направление резко; полоса песка — безопасна',
   draw(z,layer){ const c=G.cam; if(layer!=='ground') return; for(const p of z.ic){ const sx=Math.round(p.x-c); if(sx>W+20||sx+p.w<-20) continue; const y0=z.y0-3, y1=z.y1+4;
@@ -299,7 +299,7 @@ TUT31.street=['УЛИЦА','Иди вправо по тротуару, обхо�
 const STUT={ light:['СВЕТОФОР','Жди зелёного человечка у зебры — цифры показывают, сколько осталось. На красный — гудок, откинет назад и −3 с.','Перейди на зелёный',z=>G.hero.x>z.cx+z.cw],
   works:['ДОСКА ЧЕРЕЗ ЯМУ','На доске держи равновесие: стик ↑/↓ против крена (шкала под ногами). Или иди по грязи внизу — медленно, но без риска.','Перейди яму',z=>G.hero.x>z.px+z.pw],
   puddle:['ЛУЖИ','Увидел «!» у края экрана — уйди вглубь тротуара, подальше от бордюра. Иначе машина обрызгает: −5 с.','Увернись от брызг',z=>z.tutW>=1],
-  ice:['ГОЛОЛЁД','На льду не дёргайся: резкий разворот — падение и −4 с. Коричневая полоса песка — безопасна.','Пройди лёд',z=>z.ic&&z.ic[0]&&G.hero.x>z.ic[0].x+z.ic[0].w],
+  ice:['ГОЛОЛЁД','На льду не дёргайся: резкий разворот — падение и −2 с. Коричневая полоса песка — безопасна.','Пройди лёд',z=>z.ic&&z.ic[0]&&G.hero.x>z.ic[0].x+z.ic[0].w],
   promo:['ПРОМОУТЕР','Обойди его по дальнему краю тротуара. Поймал — дважды «НЕТ», и он отстанет. Листовка: +2 очка, но −2 с.','Пройди промоутера',z=>z.pmDone||G.hero.x>z.pm.x+20],
   pigeons:['ГОЛУБИ','Не беги сквозь стаю: отклони джойстик чуть-чуть и пройди шагом по краю.','Пройди голубей шагом',z=>G.hero.x>z.pcx+50],
   crash:['ДТП','Зеваки стоят стеной. ТОЛКНУТЬ сквозь — быстро, но скандал. Или арка во двор — дольше, но спокойно.','Обойди ДТП',z=>z.yardDone||G.hero.x>z.ax+z.cw]};
@@ -339,7 +339,7 @@ function st4AmbTick(z,dt){ if(typeof AC==='undefined'||!AC||save.mute) return; z
 // ---------- M2-15: транспорт улицы (§P4–P7) — 2 полосы глубины (дальняя → вправо, ближняя ← влево), брызги из-под колёс в дождь, автобус на остановке (гэг «уехал»), прокатные самокаты у фасада, такси «ВЗЯТЬ ТАКСИ?» с катсценой салона ----------
 st4CarsDraw=function(z){ if(!atlOk('tr')) return; const g=st4Geo(), h=G.hero, hx=h.x-G.cam; const arr=[...(z.cars||[])].sort((a,b)=>(b.dir>0?1:0)-(a.dir>0?1:0));
   for(const q of arr){ const r=ATL4.tr.f[q.spr]; if(!r) continue; const far=q.dir>0||q.spl, base=far?g.farY:g.carY, sx=Math.round(q.x-G.cam), y=base-r[3]+Math.round(Math.sin(G.t*9+q.x*.1)*.5);
-    if(sx<-r[2]-4||sx>W+4) continue; ctx.fillStyle='rgba(10,6,20,.3)'; ctx.fillRect(sx+3,base-2,r[2]-6,3); const ghost=hx>sx-6&&hx<sx+r[2]+6&&far; if(ghost) ctx.globalAlpha=.6; atlDraw(ctx,'tr',q.spr,sx,y,q.dir<0); ctx.globalAlpha=1;
+    if(sx<-r[2]-4||sx>W+4) continue; ctx.fillStyle='rgba(10,6,20,.3)'; ctx.fillRect(sx+3,base-2,r[2]-6,3); atlDraw(ctx,'tr',q.spr,sx,y,q.dir<0); veh411(sx,y,r[2],r[3]);
     if(z.weather==='rain'){ ctx.fillStyle='rgba(170,210,255,.8)'; const wx=q.dir>0?sx+6:sx+r[2]-6; for(let k=0;k<4;k++){ const ph=(G.t*6+k*.25+q.x*.01)%1; ctx.fillRect(Math.round(wx-q.dir*ph*12),Math.round(base-2-Math.sin(ph*3.14)*6),1,1); } }
     if(q.brake){ ctx.fillStyle='#ff3a3a'; ctx.fillRect(q.dir>0?sx:sx+r[2]-2,y+r[3]-12,2,2); } } };
 function st4TransInit(z){ if(z.yard||z.carsOff) return; const r=st4Rng(z); r(); r(); const busy=x=>[[z.cx,z.cw],[z.px,z.pw],[z.ax-140,280],[z.pcx-60,120]].some(q=>q[0]!==undefined&&!isNaN(q[0])&&x>q[0]-90&&x<q[0]+q[1]+90);
@@ -356,8 +356,8 @@ function st4TransDraw(z,layer){ const g=st4Geo(), c=G.cam, h=G.hero;
   if(layer==='back') for(const s of z.scoots||[]) atlDraw(ctx,'tr','scooter_share_'+(s.f?1:0),Math.round(s.x-c)-8,z.y0-15,s.f);
   if(layer==='front'){ const B=z.bus; if(B){ const sx=Math.round(B.stop-c);
       ctx.fillStyle=P.ink; ctx.fillRect(sx-1,g.curbY-40,3,40); ctx.fillStyle='#5a5a68'; ctx.fillRect(sx,g.curbY-39,1,39); ctx.fillStyle=P.ink; ctx.fillRect(sx-7,g.curbY-50,15,12); ctx.fillStyle='#ffd23f'; ctx.fillRect(sx-6,g.curbY-49,13,10); ctx.fillStyle=P.ink; ctx.fillRect(sx-4,g.curbY-47,9,5); ctx.fillStyle='#ffd23f'; ctx.fillRect(sx-3,g.curbY-46,2,2); ctx.fillRect(sx+2,g.curbY-46,2,2); ctx.fillStyle=P.ink; ctx.fillRect(sx-4,g.curbY-42,2,1); ctx.fillRect(sx+3,g.curbY-42,2,1);
-      const r=ATL4.tr&&ATL4.tr.f.bus_ext; if(r){ const bx=Math.round(B.bx-c), by=g.farY-r[3]; const ghost=B.st!=='ride'&&(h.x-c)>bx-6&&(h.x-c)<bx+r[2]+6; const nm=B.st==='wait'?'bus_ext_open':'bus_ext', cy=g.y1+1; ctx.save(); ctx.beginPath(); ctx.rect(bx-2,cy,r[2]+4,H-cy); ctx.clip(); if(ghost) ctx.globalAlpha=.55; atlDraw(ctx,'tr',nm,bx,by,false); ctx.restore(); ctx.save(); ctx.beginPath(); ctx.rect(bx-2,by-2,r[2]+4,cy-by+2); ctx.clip(); ctx.globalAlpha=B.st==='ride'?.9:ghost?.3:.42; atlDraw(ctx,'tr',nm,bx,by,false); ctx.restore(); ctx.globalAlpha=1; } }
-    if(z.taxi){ const r=ATL4.tr&&ATL4.tr.f.taxi; const sx=Math.round(z.taxi.x-c); if(r){ const ghost=(h.x-c)>sx-6&&(h.x-c)<sx+r[2]+6; if(ghost) ctx.globalAlpha=.6; atlDraw(ctx,'tr','taxi',sx,g.farY-r[3],true); ctx.globalAlpha=1; } if(Math.floor(G.t*2)%2){ ctx.fillStyle='#3aff7a'; ctx.fillRect(sx+28,g.carY-6-(r?r[3]:26)-2,3,2); } } } }
+      const r=ATL4.tr&&ATL4.tr.f.bus_ext; if(r){ const bx=Math.round(B.bx-c), by=g.farY-r[3]; const nm=B.st==='wait'?'bus_ext_open':'bus_ext'; atlDraw(ctx,'tr',nm,bx,by,false); veh411(bx,by,r[2],r[3]); } }
+    if(z.taxi){ const r=ATL4.tr&&ATL4.tr.f.taxi; const sx=Math.round(z.taxi.x-c); if(r){ atlDraw(ctx,'tr','taxi',sx,g.farY-r[3],true); veh411(sx,g.farY-r[3],r[2],r[3]); } if(Math.floor(G.t*2)%2){ ctx.fillStyle='#3aff7a'; ctx.fillRect(sx+28,g.carY-6-(r?r[3]:26)-2,3,2); } } } }
 // такси: кнопка у машины → модалка «ВЗЯТЬ ТАКСИ?» → катсцена салона (atlas taxi_int) → пропуск остатка сегмента улицы
 const TAXI_COST=8;
 function st4TaxiCtx(z){ const h=G.hero; if(!z.taxi||z.yard||Math.abs(h.x-(z.taxi.x+30))>34||h.y<z.y1-12) return null; const ok=wallet().coins>=TAXI_COST;

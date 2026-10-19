@@ -11,5 +11,7 @@ const ATL4P={"ln":{"ln0":["#d8265e","#e0517e","#8c193d","#61112a"],"ln1":["#19b8
 for(const k in ATL4){ const a=ATL4[k]; a.img=new Image(); a.img.onload=()=>{ a.ok=true; if(typeof SPRC!=='undefined'&&k==='heroes') SPRC.clear&&SPRC.clear(); }; a.img.src=a.src; }
 function atlOk(k){ const a=ATL4[k]; return !!(a&&a.ok); }
 // нарисовать кадр атласа: x,y — левый верх; flip — зеркально относительно центра кадра
+// 4.1.1: надписи на спрайтах не зеркалятся — при flip эти прямоугольники (в координатах спрайта) рисуются ещё раз без отражения
+const ATL_TXT411={car_van:[[7,7,30,10]],bus_ext:[[108,2,11,9]],bus_ext_open:[[108,2,11,9]]};
 function atlDraw(c,k,name,x,y,flip,sc){ const a=ATL4[k]; if(!a||!a.ok) return false; const r=a.f[name]; if(!r) return false; sc=sc||1; const w=Math.round(r[2]*sc), h=Math.round(r[3]*sc);
-  if(flip){ c.save(); c.translate(Math.round(x)+w,Math.round(y)); c.scale(-1,1); c.drawImage(a.img,r[0],r[1],r[2],r[3],0,0,w,h); c.restore(); } else c.drawImage(a.img,r[0],r[1],r[2],r[3],Math.round(x),Math.round(y),w,h); return true; }
+  if(flip){ c.save(); c.translate(Math.round(x)+w,Math.round(y)); c.scale(-1,1); c.drawImage(a.img,r[0],r[1],r[2],r[3],0,0,w,h); c.restore(); const T=k==='tr'&&ATL_TXT411[name]; if(T) for(const q of T){ const [lx,ly,lw,lh]=q; c.drawImage(a.img,r[0]+lx,r[1]+ly,lw,lh,Math.round(x)+w-Math.round((lx+lw)*sc),Math.round(y)+Math.round(ly*sc),Math.round(lw*sc),Math.round(lh*sc)); } } else c.drawImage(a.img,r[0],r[1],r[2],r[3],Math.round(x),Math.round(y),w,h); return true; }
