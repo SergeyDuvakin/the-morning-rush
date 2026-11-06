@@ -1,7 +1,7 @@
 'use strict';
 // ================= ЗОНА: ПЛАТФОРМА — пробиться к дверям =================
 ZONES.plat={ title:z=>z.short?'КОРОТКИЙ ПОЕЗД!':z.babatank?'ПЛАТФОРМА · БАБУШКА-ТАНК':'ПЛАТФОРМА',
-  tip:z=>'встань у двери (жёлтая стрелка) и жми «ВОЙТИ»; полна — жми «ВОЙТИ» много раз',
+  tip:z=>'подойди к открытой двери и жми «ВОЙТИ»; полна — жми «ВОЙТИ» много раз',
   init(z){ z.len=Math.max(W,560); const L=z.len; z.ph='arrive'; z.pT=2.2; z.trainX=L+40; z.boarded=false; z.sq=0; z.trains=0;
     z.doors=[]; if(z.short){ z.shX=Math.round(Math.min(L*.45,W*.5-70)); z.doors.push({x:z.shX+90,cap:ri(2,3),n:0,open:0}); } else for(let x=110;x<L-40;x+=Math.max(80,Math.round((L-130)/Math.max(3,Math.round((L-130)/95))))) z.doors.push({x,cap:ri(2,5),n:0,open:0});
     if(z.cols){ for(let x=180;x<L-60;x+=150){ z.solids.push([x-6,z.y0+16,x+6,z.y0+26]); } }
@@ -167,7 +167,7 @@ function detourGuard(){ const o=TR.over; if(!o||o.end||TR.done) return; if(o.t0-
   const last=TR.zones.map(q=>!!q.det).lastIndexOf(true); if(last<TR.zi) return; o.end=true; o.cost=60; o.capped=true; tev('detour_cap');
   TR.zi=last; if(TR.z) TR.z.done=true; TR.next=.55; say('Ладно, дошёл до своей пешком по переходу…',2,'#ccc'); }
 ZONES.xfer={ title:z=>'ПЕРЕХОД НА ВСТРЕЧНУЮ ←',
-  tip:z=>'иди налево по лестнице к обратному поезду, у двери жми «ВОЙТИ»',
+  tip:z=>'иди налево к обратному поезду, подойди к двери и жми «ВОЙТИ»',
   init(z){ z.len=Math.max(W,420); const L=z.len; z.doorX=Math.round(L*.3); z.stA=Math.round(L*.48); z.stB=Math.round(L*.78); z.boarded=false; z.ourX=0; z.noLeave=true;
     for(let i=0;i<Math.min(8,3+(z.d>>2));i++){ const e=mkNpc(qType(z.d),rnd(40,L-60),rnd(z.y0+4,z.y1)); e.dir=1; e.spd2=rnd(20,32); e.free=1; z.npcs.push(e); }
     const h=G.hero; h.x=L-125; /* не под кнопками A/B (ширина ~100 + отступ) */ h.y=(z.y0+z.y1)/2; h.face=-1; tev('xfer'); },

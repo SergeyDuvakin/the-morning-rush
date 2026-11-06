@@ -139,7 +139,7 @@ function m3Fine(z,why){ if(why==='hare'){ m3Caught('валидатор'); return
 // ---------- ЗОНА: перрон — табло врёт (M3-2) ----------
 // Табло: «ВАГОН N ↔» над разметкой; реальная остановка сдвинута (±½ вагона, двери не там); полосы света у реальных дверей за 1.5 с до остановки.
 ZONES.mplat={ title:z=>'ПЕРРОН · '+M3_COL[z.kind].n+' · ТАБЛО: ВАГОН '+z.board,
-  tip:z=>'жди у разметки, но смотри на жёлтые полосы — двери встанут там; у двери «ВОЙТИ»',
+  tip:z=>'табло может врать — смотри, где реально открылись двери, подойди к ним и жми «ВОЙТИ»',
   init(z){ z.len=W; const L=z.len, P2=M3.EXT_BODY+M3.EXT_GAP; z.pitch=P2; z.ph='wait'; z.pT=4.2; z.trainX=-L*1.4; z.boarded=false; z.trains=0; z.inN=0;
     // ожидаемые двери (разметка) — вагоны 1.. справа налево; голова поезда (нос) справа
     z.headX=L-60-178; const dOff=z.kind==='mck'?76:67; z.dOff=dOff; z.cars=[]; for(let k=1;k<=7;k++){ const x0=k===1?z.headX:z.headX-(k-1)*P2; z.cars.push({k,x0,door:x0+(k===1?dOff:dOff-2)}); }
@@ -162,7 +162,7 @@ ZONES.mplat={ title:z=>'ПЕРРОН · '+M3_COL[z.kind].n+' · ТАБЛО: ВА
     if(!open&&z.npcs.length<8){ const c=pick(z.exp); const e=mkNpc(qType(z.d||6),Math.random()<.5?SA.l+70:W-140,rnd(z.y0+6,z.y1-6)); e.hx=c.door+rnd(-18,18); e.hy=rnd(z.y0+2,z.y1-8); z.npcs.push(e); }
     if(open&&!z.boarded){ const d=this.nearDoor(z); z.atDoor=Math.abs(h.x-d.x)<13&&h.y<z.y0+11?d:null; } else z.atDoor=null;
     if(z.boarded){ z.lockHero=true; walkTo(h,z.bd.x,z.y0-14,40,dt); h.y=Math.max(h.y,z.y0-14); z.bT-=dt; if(z.bT<=0&&!z.fin){ z.fin=1; zoneDone(); } }
-    z.hint=z.boarded?(TR.m3.first?'первым в вагон — места твои!':'внутри!'):open?(z.atDoor?'ЖМИ «ВОЙТИ»!':'к открытой двери!'):z.lit?'жёлтые полосы — двери встанут тут!':z.ph==='arrive'?'поезд подходит…':'табло: ВАГОН '+z.board+' ↔'; },
+    z.hint=z.boarded?(TR.m3.first?'первым в вагон — места твои!':'внутри!'):open?(z.atDoor?'ЖМИ «ВОЙТИ»!':'подойди к открытой двери'):z.lit?'двери будут у жёлтых полос':z.ph==='arrive'?'поезд подходит…':'табло: ВАГОН '+z.board+' ↔'; },
   board(z,d){ const h=G.hero; z.boarded=true; z.bd=d; z.bT=.8; d.n++; h.pin=true; h.ghost=true; TR.m3.first=d.n<=2; TR.m3.car=d.k; TR.m3.sh=z.sh; tev(TR.m3.first?'m3_first_wave':'m3_board'); pop(TR.m3.first?'ПЕРВЫМ!':'ВОШЁЛ!',h.x,h.y-52,P.neonLime,9); SFX.pick(); haptic('success'); },
   ctx(z){ const d=z.atDoor; if(!d||z.boarded) return {}; return {b:{label:'ВОЙТИ',col:'#2aa860',fn:()=>this.board(z,d)}}; },
   prog(z){ const h=G.hero, d=this.nearDoor(z); return (z.boarded?1000:0)-Math.abs(h.x-d.x)-Math.abs(h.y-z.y0)+z.trains*30; },
